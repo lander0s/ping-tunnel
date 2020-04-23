@@ -1,0 +1,7 @@
+﻿---
+BasedOnStyle: WebKit
+AlignConsecutiveAssignments: 'true'
+AlignConsecutiveDeclarations: 'false'
+AllowAllParametersOfDeclarationOnNextLine: 'false'
+AlignTrailingComments: 'true'
+...

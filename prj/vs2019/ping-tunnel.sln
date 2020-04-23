@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29215.179
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ping-tunnel", "ping-tunnel.vcxproj", "{ABA50E2D-713D-425A-876F-05B82F78837D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{ABA50E2D-713D-425A-876F-05B82F78837D}.Debug|x64.ActiveCfg = Debug|x64
+		{ABA50E2D-713D-425A-876F-05B82F78837D}.Debug|x64.Build.0 = Debug|x64
+		{ABA50E2D-713D-425A-876F-05B82F78837D}.Debug|x86.ActiveCfg = Debug|Win32
+		{ABA50E2D-713D-425A-876F-05B82F78837D}.Debug|x86.Build.0 = Debug|Win32
+		{ABA50E2D-713D-425A-876F-05B82F78837D}.Release|x64.ActiveCfg = Release|x64
+		{ABA50E2D-713D-425A-876F-05B82F78837D}.Release|x64.Build.0 = Release|x64
+		{ABA50E2D-713D-425A-876F-05B82F78837D}.Release|x86.ActiveCfg = Release|Win32
+		{ABA50E2D-713D-425A-876F-05B82F78837D}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {8796ED52-3F9F-4243-8174-EF367E739099}
+	EndGlobalSection
+EndGlobal
