@@ -1,5 +1,5 @@
 #include "sniffer.h"
-#include "sockets.h"
+#include "networking.h"
 #include <string.h>
 
 std::string sniffer::last_error = "";

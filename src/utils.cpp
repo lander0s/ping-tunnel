@@ -1,6 +1,5 @@
 #include "utils.h"
-#include "sockets.h"
-#include "tcp_ip.h"
+#include "networking.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>

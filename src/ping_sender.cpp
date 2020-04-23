@@ -1,6 +1,5 @@
 #include "ping_sender.h"
-#include "sockets.h"
-#include "tcp_ip.h"
+#include "networking.h"
 #include "utils.h"
 #include <iostream>
 #include <string.h>

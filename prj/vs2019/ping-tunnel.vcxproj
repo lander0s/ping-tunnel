@@ -146,10 +146,9 @@
     <ClCompile Include="..\..\src\utils.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\src\networking.h" />
     <ClInclude Include="..\..\src\ping_sender.h" />
     <ClInclude Include="..\..\src\sniffer.h" />
-    <ClInclude Include="..\..\src\sockets.h" />
-    <ClInclude Include="..\..\src\tcp_ip.h" />
     <ClInclude Include="..\..\src\tunnel.h" />
     <ClInclude Include="..\..\src\utils.h" />
   </ItemGroup>

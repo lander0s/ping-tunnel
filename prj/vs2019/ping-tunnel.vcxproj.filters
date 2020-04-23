@@ -38,16 +38,13 @@
     <ClInclude Include="..\..\src\sniffer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\sockets.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\tunnel.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\tcp_ip.h">
+    <ClInclude Include="..\..\src\networking.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

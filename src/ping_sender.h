@@ -1,6 +1,5 @@
 #pragma once
-#include "sockets.h"
-#include "tcp_ip.h"
+#include "networking.h"
 #include <string>
 
 class ping_sender {
