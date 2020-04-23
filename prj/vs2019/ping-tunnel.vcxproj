@@ -76,7 +76,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Users\David Landeros\Documents\Developer\C++\pcap-examples\ping-tunnel\libs\npcap-sdk-1.05\Include;C:\Users\David Landeros\Documents\Developer\C++\pcap-examples\ping-tunnel\libs\popl-master\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\David Landeros\Documents\Developer\C++\ping-tunnel\libs\json\include;C:\Users\David Landeros\Documents\Developer\C++\ping-tunnel\libs\npcap-sdk-1.05\Include;C:\Users\David Landeros\Documents\Developer\C++\ping-tunnel\libs\popl\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_WINSOCK_DEPRECATED_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
@@ -91,7 +91,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Users\David Landeros\Documents\Developer\C++\pcap-examples\ping-tunnel\libs\npcap-sdk-1.05\Include;C:\Users\David Landeros\Documents\Developer\C++\pcap-examples\ping-tunnel\libs\popl-master\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\David Landeros\Documents\Developer\C++\ping-tunnel\libs\json\include;C:\Users\David Landeros\Documents\Developer\C++\ping-tunnel\libs\npcap-sdk-1.05\Include;C:\Users\David Landeros\Documents\Developer\C++\ping-tunnel\libs\popl\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_WINSOCK_DEPRECATED_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
@@ -108,7 +108,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Users\David Landeros\Documents\Developer\C++\pcap-examples\ping-tunnel\libs\npcap-sdk-1.05\Include;C:\Users\David Landeros\Documents\Developer\C++\pcap-examples\ping-tunnel\libs\popl-master\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\David Landeros\Documents\Developer\C++\ping-tunnel\libs\json\include;C:\Users\David Landeros\Documents\Developer\C++\ping-tunnel\libs\npcap-sdk-1.05\Include;C:\Users\David Landeros\Documents\Developer\C++\ping-tunnel\libs\popl\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_WINSOCK_DEPRECATED_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
@@ -127,7 +127,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Users\David Landeros\Documents\Developer\C++\pcap-examples\ping-tunnel\libs\npcap-sdk-1.05\Include;C:\Users\David Landeros\Documents\Developer\C++\pcap-examples\ping-tunnel\libs\popl-master\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\David Landeros\Documents\Developer\C++\ping-tunnel\libs\json\include;C:\Users\David Landeros\Documents\Developer\C++\ping-tunnel\libs\npcap-sdk-1.05\Include;C:\Users\David Landeros\Documents\Developer\C++\ping-tunnel\libs\popl\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_WINSOCK_DEPRECATED_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
@@ -139,6 +139,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\src\config.cpp" />
     <ClCompile Include="..\..\src\main.cpp" />
     <ClCompile Include="..\..\src\ping_sender.cpp" />
     <ClCompile Include="..\..\src\sniffer.cpp" />
@@ -146,6 +147,7 @@
     <ClCompile Include="..\..\src\utils.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\src\config.h" />
     <ClInclude Include="..\..\src\networking.h" />
     <ClInclude Include="..\..\src\ping_sender.h" />
     <ClInclude Include="..\..\src\sniffer.h" />
