@@ -37,18 +37,32 @@
 port_mapping_list tunnel::port_mappings;
 connection_map tunnel::connections;
 
-void tunnel::start()
+void tunnel::run()
 {
-    std::cout << "[+] running as " << (config::is_proxy() ? "proxy" : "forwarder") << std::endl;
-    std::string sniffer_filter = config::is_proxy() ? "icmp[icmptype] == 8" : "icmp[icmptype] == 0";
-    sniffer::init(config::get_network_interface(), sniffer_filter);
-    ping_sender::init();
+    try
+	{
+        std::string sniffer_filter;
+        config::load_config("ping-tunnel.json");
 
-    if (config::is_proxy() == false) {
-        initialize_port_mappings();
+        if (config::is_proxy()) {
+            std::cout << "[+] running as proxy" << std::endl;
+            sniffer_filter = "icmp[icmptype] == 8";
+        } else {
+            std::cout << "[+] running as forwarder" << std::endl;
+            sniffer_filter = "icmp[icmptype] == 0";
+            initialize_port_mappings();
+		}
+
+        sniffer::init(config::get_network_interface(), sniffer_filter);
+        ping_sender::init();
+        main_loop();
     }
-    main_loop();
+	catch (std::runtime_error e)
+	{
+        std::cout << "[-] " << e.what() << std::endl;
+    }
 
+    cleanup();
     ping_sender::deinit();
     sniffer::deinit();
 }
@@ -68,11 +82,15 @@ void tunnel::initialize_port_mappings()
         addr.sin_addr.s_addr    = INADDR_ANY;
         int result              = ::bind(mapping.listener_socket, (sockaddr*)&addr, sizeof(sockaddr_in));
         if (result == -1) {
-            throw std::runtime_error(strerror(errno));
+            char err_buf[1024];
+            sprintf(err_buf, "Couldn't listen on port %d, %s", mapping.local_port, strerror(errno));
+            throw std::runtime_error(err_buf);
         }
         result = ::listen(mapping.listener_socket, 0);
         if (result == -1) {
-            throw std::runtime_error(strerror(errno));
+            char err_buf[1024];
+            sprintf(err_buf, "Couldn't listen on port %d, %s", mapping.local_port, strerror(errno));
+            throw std::runtime_error(err_buf);
         }
         port_mappings.push_back(mapping);
     }
@@ -146,7 +164,7 @@ void tunnel::main_loop()
 
                 if (len <= 0) {
                     send_fin(connection);
-                    std::cout << "[+] tcp connection closed on "
+                    std::cout << "[+] TCP connection closed on "
                               << (config::is_proxy() ? "proxy" : "forwarder")
                               << " side" << std::endl;
                 }
@@ -205,7 +223,7 @@ void tunnel::handle_ack(connection_t* connection, const tunnel_packet_t* packet)
     uint32_t actual_seq_no   = packet->header.seq_no;
 
     if (expected_seq_no == actual_seq_no) {
-        std::cout << "[+] packet confirmed as delivered, seq: " << actual_seq_no << std::endl;
+        std::cout << "[+] Packet confirmed as delivered, seq: " << actual_seq_no << std::endl;
         if (top->is_fin()) {
             remove_connection(connection);
         } else {
@@ -216,7 +234,7 @@ void tunnel::handle_ack(connection_t* connection, const tunnel_packet_t* packet)
 
 void tunnel::handle_push(connection_t* connection, const tunnel_packet_t* packet)
 {
-    std::cout << "[+] packet received, seq: " << packet->header.seq_no << std::endl;
+    std::cout << "[+] Packet received, seq: " << packet->header.seq_no << std::endl;
     send_ack(connection, packet);
 
     if (connection->remote_sequence_number != packet->header.seq_no) {
@@ -234,16 +252,16 @@ void tunnel::handle_fin(connection_t* connection, const tunnel_packet_t* packet)
     send_ack(connection, packet);
     send_ack(connection, packet);
 
-    std::cout << "[+] tcp connection closed on " << (config::is_proxy() ? "forwarder" : "proxy") << " side" << std::endl;
+    std::cout << "[+] TCP connection closed on " << (config::is_proxy() ? "forwarder" : "proxy") << " side" << std::endl;
     remove_connection(connection);
 }
 
-void tunnel::handle_syn(const ip_header_t* ip_header, icmp_packet_t* icmp_packet,  const tunnel_packet_t* packet)
+void tunnel::handle_syn(const ip_header_t* ip_header, icmp_packet_t* icmp_packet, const tunnel_packet_t* packet)
 {
     // only create the connection if it does not exist previously
     connection_t* conn = get_connection(packet->header.connection_id);
     if (conn == nullptr) {
-        conn = add_proxy_side_connection(packet->header.connection_id, ip_header, packet);
+        conn                            = add_proxy_side_connection(packet->header.connection_id, ip_header, packet);
         conn->last_received_icmp_packet = *icmp_packet;
     }
     send_ack(conn, packet);
@@ -314,7 +332,7 @@ bool tunnel::should_send_new_message(connection_t* connection)
     if (std::chrono::duration_cast<std::chrono::milliseconds>(elapsed_time).count() > 1000) {
 
         if (connection->outgoing_packets.empty() == false) {
-            std::cout << "[*] resending unconfirmed packet, seq: "
+            std::cout << "[*] Resending unconfirmed packet, seq: "
                       << connection->outgoing_packets.front().header.seq_no
                       << ", size: " << connection->outgoing_packets.front().header.data_len
                       << std::endl;
@@ -347,7 +365,7 @@ void tunnel::on_message(connection_t* connection, const char* data, int len)
     int sent = send(connection->tcp_socket, data, len, 0);
     if (sent <= 0) {
         send_fin(connection);
-        std::cout << "[-] failed to send data through tcp socket: "
+        std::cout << "[-] Failed to send data through tcp socket: "
                   << strerror(errno)
                   << std::endl;
     }
@@ -382,7 +400,7 @@ connection_t* tunnel::add_forwarder_side_connection(socket_t tcp_socket, std::st
     utils::resolve_host(dst_hostname, &conn.destination_addr);
     conn.destination_addr.sin_port = htons(dst_port);
 
-    std::cout << "[+] new connection to forward: " << conn.connection_id << std::endl;
+    std::cout << "[+] New connection to forward: " << conn.connection_id << std::endl;
 
     connections[conn.connection_id] = conn;
     return &connections[conn.connection_id];
@@ -390,7 +408,7 @@ connection_t* tunnel::add_forwarder_side_connection(socket_t tcp_socket, std::st
 
 connection_t* tunnel::add_proxy_side_connection(uint32_t id, const ip_header_t* ip_header, const tunnel_packet_t* initiator)
 {
-    std::cout << "[+] new connection to forward: " << id << std::endl;
+    std::cout << "[+] New connection to forward: " << id << std::endl;
 
     connection_t conn     = {};
     conn.connection_id    = id;
@@ -411,7 +429,7 @@ connection_t* tunnel::add_proxy_side_connection(uint32_t id, const ip_header_t* 
     int result      = connect(conn.tcp_socket, (sockaddr*)&conn.destination_addr, sizeof(sockaddr_in));
     if (result == -1) {
         send_fin(&conn);
-        std::cout << "[-] connection failed: "
+        std::cout << "[-] Connection failed: "
                   << strerror(errno)
                   << std::endl;
     }
@@ -422,7 +440,7 @@ connection_t* tunnel::add_proxy_side_connection(uint32_t id, const ip_header_t* 
 
 void tunnel::remove_connection(connection_t* connection)
 {
-    std::cout << "[+] removing connection with id: "
+    std::cout << "[+] Removing connection with id: "
               << connection->connection_id
               << std::endl;
 
@@ -431,4 +449,26 @@ void tunnel::remove_connection(connection_t* connection)
         connection->tcp_socket = INVALID_SOCKET;
     }
     connections.erase(connection->connection_id);
+}
+
+void tunnel::cleanup()
+{
+    std::cout << "[+] Gracefully shutting down... " << std::endl;
+    for (auto& it : connections) {
+        connection_t* connection = &it.second;
+        if (connection->tcp_socket != INVALID_SOCKET) {
+            closesocket(connection->tcp_socket);
+            connection->tcp_socket = INVALID_SOCKET;
+        }
+    }
+    connections.clear();
+
+    for (auto& it : port_mappings) {
+        port_mapping_t mapping = it;
+        if (mapping.listener_socket != INVALID_SOCKET) {
+            closesocket(mapping.listener_socket);
+            mapping.listener_socket = INVALID_SOCKET;
+        }
+    }
+    port_mappings.clear();
 }

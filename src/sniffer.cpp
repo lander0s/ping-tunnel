@@ -59,8 +59,10 @@ void sniffer::init(const std::string& interface_name, const std::string& filter)
 
 void sniffer::deinit()
 {
-    pcap_freecode(&filter);
-    pcap_close(handle);
+    if (handle) {
+        pcap_freecode(&filter);
+        pcap_close(handle);
+	}
 }
 
 int sniffer::get_next_capture(char* raw_packet, uint16_t len)

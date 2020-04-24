@@ -109,7 +109,8 @@ private:
     static connection_t* add_proxy_side_connection(uint32_t id, const ip_header_t* ip_header, const tunnel_packet_t* initiator);
     static void remove_connection(connection_t* connection);
     static void initialize_port_mappings();
+    static void cleanup();
 
 public:
-    static void start();
+    static void run();
 };

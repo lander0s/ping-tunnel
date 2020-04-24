@@ -42,6 +42,7 @@ public:
     static int get_local_port(unsigned int index);
     static std::string get_destination_address(unsigned int index);
     static int get_destination_port(unsigned int index);
+    static std::string get_port_mapping_comments(int index);
 };
 
 #define REQUIRE(object, member, method, type)                                           \
