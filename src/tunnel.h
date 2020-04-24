@@ -64,6 +64,7 @@ struct tunnel_packet_t {
 typedef std::queue<tunnel_packet_t> packet_queue;
 
 struct connection_t {
+    int resending_counter;
     uint32_t connection_id;
     sockaddr_in tunnel_addr;
     sockaddr_in destination_addr;

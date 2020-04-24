@@ -105,7 +105,7 @@ void tunnel::initialize_port_mappings()
 void tunnel::main_loop()
 {
     while (!stopped_by_user) {
-        char raw_packet[1024];
+        char raw_packet[2048];
         int len = sniffer::get_next_capture(raw_packet, 1024);
         if (len > 0) {
             // the sniffer's filter guarantees the packet is either echo request or echo reply
@@ -140,12 +140,14 @@ void tunnel::main_loop()
             }
         }
 
-        for (auto& it : connections) {
-            connection_t* connection = &it.second;
+		connection_map::iterator it = connections.begin();
+        while(it != connections.end()) {
+            connection_t* connection = &it->second;
             if (should_send_new_message(connection)) {
                 tunnel_packet_t packet             = get_next_message_to_send(connection);
                 connection->local_sequence_number  = packet.header.seq_no;
                 connection->last_transmission_time = std::chrono::steady_clock::now();
+                connection->resending_counter++;
 
                 if (config::is_proxy()) {
                     ping_sender::reply(&packet, packet.size(), &connection->tunnel_addr, &connection->last_received_icmp_packet);
@@ -175,6 +177,17 @@ void tunnel::main_loop()
                               << " side" << std::endl;
                 }
             }
+
+
+			if (connection->resending_counter > 5) {
+                std::cout << "[-] Connection " << connection->connection_id
+					      << " seems dead, removing..." << std::endl;
+                it++;
+                remove_connection(connection);
+                continue;
+			}
+
+			it++;
         }
 
         for (auto& it : port_mappings) {
@@ -229,6 +242,7 @@ void tunnel::handle_ack(connection_t* connection, const tunnel_packet_t* packet)
     uint32_t actual_seq_no   = packet->header.seq_no;
 
     if (expected_seq_no == actual_seq_no) {
+        connection->resending_counter = 0;
         std::cout << "[+] Packet confirmed as delivered, seq: " << actual_seq_no << std::endl;
         if (top->is_fin()) {
             remove_connection(connection);
