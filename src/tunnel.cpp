@@ -34,9 +34,9 @@ void tunnel::initialize_port_mappings()
     int count = config::get_port_mapping_count();
     for (int i = 0; i < count; i++) {
         port_mapping_t mapping;
-        mapping.dst_hostname = config::get_destination_address(i);
-        mapping.dst_port     = config::get_destination_port(i);
-        mapping.local_port   = config::get_local_port(i);
+        mapping.dst_hostname    = config::get_destination_address(i);
+        mapping.dst_port        = config::get_destination_port(i);
+        mapping.local_port      = config::get_local_port(i);
         mapping.listener_socket = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
         sockaddr_in addr        = {};
         addr.sin_family         = AF_INET;
@@ -129,7 +129,7 @@ void tunnel::main_loop()
             }
         }
 
-		for (auto& it : port_mappings) {
+        for (auto& it : port_mappings) {
             port_mapping_t mapping = it;
             fd_set set;
             timeval time;
