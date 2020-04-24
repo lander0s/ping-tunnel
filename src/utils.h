@@ -24,8 +24,8 @@
 
 #pragma once
 #include "networking.h"
-#include <string>
 #include <functional>
+#include <string>
 
 namespace utils {
 void dump_hex(const void* data, size_t size);

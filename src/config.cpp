@@ -108,7 +108,7 @@ int config::get_destination_port(unsigned int index)
 std::string config::get_port_mapping_comments(int index)
 {
     if (json_obj["port_mappings"][index]["__comments"].is_string()) {
-        return json_obj["port_mappings"][index]["__comments"].get<std::string>();    
-	}
+        return json_obj["port_mappings"][index]["__comments"].get<std::string>();
+    }
     return "";
 }

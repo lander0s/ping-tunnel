@@ -62,7 +62,7 @@ void sniffer::deinit()
     if (handle) {
         pcap_freecode(&filter);
         pcap_close(handle);
-	}
+    }
 }
 
 int sniffer::get_next_capture(char* raw_packet, uint16_t len)

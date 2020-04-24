@@ -29,11 +29,11 @@
 #include "sniffer.h"
 #include "utils.h"
 #include <chrono>
+#include <functional>
 #include <iostream>
 #include <stdexcept>
 #include <string.h>
 #include <thread>
-#include <functional>
 
 bool tunnel::stopped_by_user = false;
 port_mapping_list tunnel::port_mappings;
@@ -41,8 +41,7 @@ connection_map tunnel::connections;
 
 void tunnel::run()
 {
-    try
-	{
+    try {
         std::string sniffer_filter;
         config::load_config("ping-tunnel.json");
 
@@ -53,17 +52,15 @@ void tunnel::run()
             std::cout << "[+] running as forwarder" << std::endl;
             sniffer_filter = "icmp[icmptype] == 0";
             initialize_port_mappings();
-		}
+        }
 
         sniffer::init(config::get_network_interface(), sniffer_filter);
         ping_sender::init();
-		utils::install_ctrlc_handler([](){
+        utils::install_ctrlc_handler([]() {
             stopped_by_user = true;
-		});
+        });
         main_loop();
-    }
-	catch (std::runtime_error e)
-	{
+    } catch (std::runtime_error e) {
         std::cout << "[-] " << e.what() << std::endl;
     }
 

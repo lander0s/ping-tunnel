@@ -34,10 +34,10 @@
 #include <Windows.h>
 #include <tchar.h>
 #else
-#include<stdio.h>
-#include<unistd.h>
-#include<signal.h>
-#include<string.h>
+#include <signal.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
 #endif
 
 std::function<void(void)> ctr_c_handler;
@@ -149,7 +149,7 @@ BOOL WINAPI windows_signal_handler(_In_ DWORD dwCtrlType)
     if (dwCtrlType == dwCtrlType) {
         ctr_c_handler();
         return TRUE;
-	}
+    }
     return FALSE;
 }
 
