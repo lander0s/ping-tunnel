@@ -95,7 +95,7 @@ private:
     static connection_t* get_connection(uint32_t connection_id);
     static void handle_ack(connection_t* connection, const tunnel_packet_t* packet);
     static void handle_push(connection_t* connection, const tunnel_packet_t* packet);
-    static void handle_syn(const ip_header_t* ip_header, const tunnel_packet_t* packet);
+    static void handle_syn(const ip_header_t* ip_header, icmp_packet_t* icmp_packet, const tunnel_packet_t* packet);
     static void handle_fin(connection_t* connection, const tunnel_packet_t* packet);
     static void send_syn(connection_t* connection);
     static void send_ack(connection_t* connection, const tunnel_packet_t* packet);

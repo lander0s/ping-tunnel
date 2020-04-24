@@ -95,7 +95,7 @@ void tunnel::main_loop()
                 connection_t* connection = get_connection(conn_id);
 
                 if (tunnel_packet->is_syn()) {
-                    handle_syn(ip_header, tunnel_packet);
+                    handle_syn(ip_header, icmp_packet, tunnel_packet);
                 }
 
                 if (connection) {
@@ -238,12 +238,13 @@ void tunnel::handle_fin(connection_t* connection, const tunnel_packet_t* packet)
     remove_connection(connection);
 }
 
-void tunnel::handle_syn(const ip_header_t* ip_header, const tunnel_packet_t* packet)
+void tunnel::handle_syn(const ip_header_t* ip_header, icmp_packet_t* icmp_packet,  const tunnel_packet_t* packet)
 {
     // only create the connection if it does not exist previously
     connection_t* conn = get_connection(packet->header.connection_id);
     if (conn == nullptr) {
         conn = add_proxy_side_connection(packet->header.connection_id, ip_header, packet);
+        conn->last_received_icmp_packet = *icmp_packet;
     }
     send_ack(conn, packet);
 }
