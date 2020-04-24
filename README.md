@@ -3,10 +3,12 @@ Firewall evasion using [ICMP tunnel](https://en.wikipedia.org/wiki/ICMP_tunnel)
 
 This tool is based on [ptunnel](https://www.mit.edu/afs.new/sipb/user/golem/tmp/ptunnel-0.61.orig/web/), it allows you to reliably tunnel TCP connections to a remote host using ICMP echo request and reply packets, commonly known as ping requests and replies
 
-such feature can be used to bypass TCP filters
+## Use case
+You are being blocked by a firewall when attempting to connect to a certain host but you can send and receive pings, then you can tunnel your connections using this **"ping proxy"**
 
-in contrast with ptunnel, this tool supports multiple tunnels forwarded to different destinations at the same time.
-
+## in contrast with ptunnel, this tool:
+- allow you to "map" multiple ports to a different destinations at the same time (see [config file](https://github.com/DavidLanderosAlcala/ping-tunnel/blob/master/ping-tunnel.json))
+- works on Windows (both facets: server and client)
 ## Supported platforms
 - Windows
 - Linux
