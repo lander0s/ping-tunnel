@@ -5,7 +5,7 @@ This tool is based on [ptunnel](https://www.mit.edu/afs.new/sipb/user/golem/tmp/
 
 such feature can be used to bypass TCP filters
 
-in contrast with ptunnel, this tool support multiple tunnels forwarded to different destinations at the same time.
+in contrast with ptunnel, this tool supports multiple tunnels forwarded to different destinations at the same time.
 
 ## Supported platforms
 - Windows
