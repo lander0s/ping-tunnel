@@ -4,8 +4,20 @@
 #include <json.hpp>
 #include <sstream>
 #include <stdexcept>
+#include <functional>
+#include <iostream>
 
 json config::json_obj;
+
+#define REQUIRE(option, method, type)                                                    \
+    if (json_obj.find(option) == json_obj.end() || json_obj[option].method() == false) { \
+        throw std::runtime_error("option '" option "' is required and must be a " type); \
+    }
+
+#define VERIFY(option, method, type)                                                     \
+    if (json_obj.find(option) != json_obj.end() && json_obj[option].method() == false) { \
+        throw std::runtime_error("option '" option "' must be a " type);                 \
+    }
 
 void config::load_config(const std::string& config_filename)
 {
@@ -22,6 +34,23 @@ void config::load_config(const std::string& config_filename)
     } catch (...) {
         throw std::runtime_error("failed to parse configuration file");
     }
+
+    verify_config();
+}
+
+
+void config::verify_config()
+{
+    REQUIRE("run_as_proxy", is_boolean, "boolean");
+    REQUIRE("network_interface", is_string, "string");
+
+    if (is_proxy() == false) {
+        REQUIRE("proxy_address", is_string, "string");
+        REQUIRE("destination_address", is_string, "string");
+        REQUIRE("destination_port", is_number, "number");
+	}
+
+	VERIFY("buffer_size", is_number, "number");
 }
 
 bool config::is_proxy()
