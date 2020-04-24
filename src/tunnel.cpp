@@ -10,8 +10,8 @@
 #include <string.h>
 #include <thread>
 
-socket_t tunnel::listener_socket = INVALID_SOCKET;
-connection_map_t tunnel::connections;
+port_mapping_list tunnel::port_mappings;
+connection_map tunnel::connections;
 
 void tunnel::start()
 {
@@ -21,7 +21,7 @@ void tunnel::start()
     ping_sender::init();
 
     if (config::is_proxy() == false) {
-        initialize_listener_socket();
+        initialize_port_mappings();
     }
     main_loop();
 
@@ -29,20 +29,28 @@ void tunnel::start()
     sniffer::deinit();
 }
 
-void tunnel::initialize_listener_socket()
+void tunnel::initialize_port_mappings()
 {
-    listener_socket      = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    sockaddr_in addr     = {};
-    addr.sin_family      = AF_INET;
-    addr.sin_port        = htons(config::get_listen_port());
-    addr.sin_addr.s_addr = INADDR_ANY;
-    int result           = ::bind(listener_socket, (sockaddr*)&addr, sizeof(sockaddr_in));
-    if (result == -1) {
-        throw std::runtime_error(strerror(errno));
-    }
-    result = ::listen(listener_socket, 0);
-    if (result == -1) {
-        throw std::runtime_error(strerror(errno));
+    int count = config::get_port_mapping_count();
+    for (int i = 0; i < count; i++) {
+        port_mapping_t mapping;
+        mapping.dst_hostname = config::get_destination_address(i);
+        mapping.dst_port     = config::get_destination_port(i);
+        mapping.local_port   = config::get_local_port(i);
+        mapping.listener_socket = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+        sockaddr_in addr        = {};
+        addr.sin_family         = AF_INET;
+        addr.sin_port           = htons(mapping.local_port);
+        addr.sin_addr.s_addr    = INADDR_ANY;
+        int result              = ::bind(mapping.listener_socket, (sockaddr*)&addr, sizeof(sockaddr_in));
+        if (result == -1) {
+            throw std::runtime_error(strerror(errno));
+        }
+        result = ::listen(mapping.listener_socket, 0);
+        if (result == -1) {
+            throw std::runtime_error(strerror(errno));
+        }
+        port_mappings.push_back(mapping);
     }
 }
 
@@ -106,8 +114,8 @@ void tunnel::main_loop()
             time.tv_sec  = 0;
             time.tv_usec = 0;
             if (select(connection->tcp_socket + 1, &set, 0, 0, &time) > 0) {
-                char buf[500];
-                int len = recv(connection->tcp_socket, buf, 500, 0);
+                char buf[sizeof(tunnel_packet_t::data)];
+                int len = recv(connection->tcp_socket, buf, sizeof(buf), 0);
                 if (len > 0) {
                     send_message(connection, buf, len);
                 }
@@ -121,16 +129,19 @@ void tunnel::main_loop()
             }
         }
 
-        fd_set set;
-        timeval time;
-        FD_ZERO(&set);
-        FD_SET(listener_socket, &set);
-        time.tv_sec  = 0;
-        time.tv_usec = 0;
-        if (select(listener_socket + 1, &set, 0, 0, &time) > 0) {
-            socket_t new_sock      = accept(listener_socket, nullptr, 0);
-            connection_t* new_conn = add_forwarder_side_connection(new_sock, config::get_dst_address(), config::get_dst_port());
-            send_syn(new_conn);
+		for (auto& it : port_mappings) {
+            port_mapping_t mapping = it;
+            fd_set set;
+            timeval time;
+            FD_ZERO(&set);
+            FD_SET(mapping.listener_socket, &set);
+            time.tv_sec  = 0;
+            time.tv_usec = 0;
+            if (select(mapping.listener_socket + 1, &set, 0, 0, &time) > 0) {
+                socket_t new_sock      = accept(mapping.listener_socket, nullptr, 0);
+                connection_t* new_conn = add_forwarder_side_connection(new_sock, mapping.dst_hostname, mapping.dst_port);
+                send_syn(new_conn);
+            }
         }
 
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -139,7 +150,7 @@ void tunnel::main_loop()
 
 connection_t* tunnel::get_connection(uint32_t connection_id)
 {
-    connection_map_t::iterator iterator = connections.find(connection_id);
+    connection_map::iterator iterator = connections.find(connection_id);
     if (iterator != connections.end()) {
         return &iterator->second;
     }

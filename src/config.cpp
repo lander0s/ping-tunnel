@@ -1,23 +1,12 @@
 #include "config.h"
 #include <fstream>
+#include <functional>
 #include <iostream>
 #include <json.hpp>
 #include <sstream>
 #include <stdexcept>
-#include <functional>
-#include <iostream>
 
 json config::json_obj;
-
-#define REQUIRE(option, method, type)                                                    \
-    if (json_obj.find(option) == json_obj.end() || json_obj[option].method() == false) { \
-        throw std::runtime_error("option '" option "' is required and must be a " type); \
-    }
-
-#define VERIFY(option, method, type)                                                     \
-    if (json_obj.find(option) != json_obj.end() && json_obj[option].method() == false) { \
-        throw std::runtime_error("option '" option "' must be a " type);                 \
-    }
 
 void config::load_config(const std::string& config_filename)
 {
@@ -38,19 +27,24 @@ void config::load_config(const std::string& config_filename)
     verify_config();
 }
 
-
 void config::verify_config()
 {
-    REQUIRE("run_as_proxy", is_boolean, "boolean");
-    REQUIRE("network_interface", is_string, "string");
+    REQUIRE(json_obj, "run_as_proxy", is_boolean, "boolean");
+    REQUIRE(json_obj, "network_interface", is_string, "string");
 
     if (is_proxy() == false) {
-        REQUIRE("proxy_address", is_string, "string");
-        REQUIRE("destination_address", is_string, "string");
-        REQUIRE("destination_port", is_number, "number");
-	}
-
-	VERIFY("buffer_size", is_number, "number");
+        REQUIRE(json_obj, "proxy_address", is_string, "string");
+        REQUIRE(json_obj, "port_mappings", is_array, "array");
+        size_t mappigs_count = json_obj["port_mappings"].size();
+        if (mappigs_count == 0) {
+            throw std::runtime_error("you need to define at least one port mapping");
+        }
+        for (int i = 0; i < mappigs_count; i++) {
+            REQUIRE(json_obj["port_mappings"][i], "local_port", is_number, "number (check port_mappings array)");
+            REQUIRE(json_obj["port_mappings"][i], "destination_port", is_number, "number (check port_mappings array)");
+            REQUIRE(json_obj["port_mappings"][i], "destination_address", is_string, "string (check port_mappings array)");
+        }
+    }
 }
 
 bool config::is_proxy()
@@ -68,17 +62,22 @@ std::string config::get_network_interface()
     return json_obj["network_interface"].get<std::string>();
 }
 
-int config::get_listen_port()
+int config::get_port_mapping_count()
 {
-    return json_obj["listen_port"].get<int>();
+    return (int)json_obj["port_mappings"].size();
 }
 
-std::string config::get_dst_address()
+int config::get_local_port(unsigned int index)
 {
-    return json_obj["destination_address"].get<std::string>();
+    return json_obj["port_mappings"][index]["local_port"].get<int>();
 }
 
-int config::get_dst_port()
+std::string config::get_destination_address(unsigned int index)
 {
-    return json_obj["destination_port"].get<int>();
+    return json_obj["port_mappings"][index]["destination_address"].get<std::string>();
+}
+
+int config::get_destination_port(unsigned int index)
+{
+    return json_obj["port_mappings"][index]["destination_port"].get<int>();
 }

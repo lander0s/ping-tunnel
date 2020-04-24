@@ -37,13 +37,13 @@ struct tunnel_packet_t {
     unsigned int size() { return sizeof(header) + header.data_len; }
 };
 
-typedef std::queue<tunnel_packet_t> packet_queue_t;
+typedef std::queue<tunnel_packet_t> packet_queue;
 
 struct connection_t {
     uint32_t connection_id;
     sockaddr_in tunnel_addr;
     sockaddr_in destination_addr;
-    packet_queue_t outgoing_packets;
+    packet_queue outgoing_packets;
     uint32_t local_sequence_number;
     uint32_t remote_sequence_number;
     uint32_t sequence_counter;
@@ -52,12 +52,21 @@ struct connection_t {
     socket_t tcp_socket;
 };
 
-typedef std::map<uint32_t, connection_t> connection_map_t;
+typedef std::map<uint32_t, connection_t> connection_map;
+
+struct port_mapping_t {
+    uint16_t local_port;
+    uint16_t dst_port;
+    std::string dst_hostname;
+    socket_t listener_socket;
+};
+
+typedef std::vector<port_mapping_t> port_mapping_list;
 
 class tunnel {
 private:
-    static connection_map_t connections;
-    static socket_t listener_socket;
+    static port_mapping_list port_mappings;
+    static connection_map connections;
     static void main_loop();
     static connection_t* get_connection(uint32_t connection_id);
     static void handle_ack(connection_t* connection, const tunnel_packet_t* packet);
@@ -75,7 +84,7 @@ private:
     static connection_t* add_forwarder_side_connection(socket_t tcp_socket, std::string dst_hostname, int dst_port);
     static connection_t* add_proxy_side_connection(uint32_t id, const ip_header_t* ip_header, const tunnel_packet_t* initiator);
     static void remove_connection(connection_t* connection);
-    static void initialize_listener_socket();
+    static void initialize_port_mappings();
 
 public:
     static void start();
