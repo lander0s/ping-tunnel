@@ -12,7 +12,7 @@ in contrast with ptunnel, this tool supports multiple tunnels forwarded to diffe
 - Linux
 
 ## Usage
-#### As Proxy:
+#### As Server:
 create a file called **ping-tunnel.json** with the following content:
 ```json
 {
@@ -23,7 +23,7 @@ create a file called **ping-tunnel.json** with the following content:
 Replace the field *network_interface* with the interface you want the proxy to listen for pings.  
 In the same folder run the program ```./ping-tunnel``` (you need to run it as root/administrator)
 
-#### As forwarder:
+#### As Client:
 create a file called **ping-tunnel.json** with a content like this:
 ```json
 {
