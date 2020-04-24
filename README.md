@@ -1,9 +1,11 @@
 # Ping-Tunnel
 C++ [ICMP tunnel](https://en.wikipedia.org/wiki/ICMP_tunnel) implementation
 
-This tool is for tunneling TCP traffic over ping requests and replies to **bypass TCP filters**,
-in contrast with the old ptunnel implementation for Linux, this version supports multiple connections on
-different TCP ports mapped to different destinations at the same time.
+This tool is based on [ptunnel](https://www.mit.edu/afs.new/sipb/user/golem/tmp/ptunnel-0.61.orig/web/), it allows you to reliably tunnel TCP connections to a remote host using ICMP echo request and reply packets, commonly known as ping requests and replies
+
+such feature can be used to bypass TCP filters
+
+in contrast with ptunnel, this tool support multiple tunnels forwarded to different destinations at the same time.
 
 ## Supported platforms
 - Windows
