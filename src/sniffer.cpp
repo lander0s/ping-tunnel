@@ -37,13 +37,16 @@ void sniffer::init(const std::string& interface_name, const std::string& filter)
     char error_message_buffer[PCAP_ERRBUF_SIZE];
     int result = pcap_lookupnet(interface_name.c_str(), &network_addr, &subnet_mask, error_message_buffer);
     if (result == PCAP_ERROR) {
-        throw std::runtime_error(error_message_buffer);
+        char err_buf[1024];
+        sprintf(err_buf, "Failed to open network interface: %s\r\n\t%s", interface_name.c_str(), error_message_buffer);
+        throw std::runtime_error(err_buf);
     }
 
     handle = pcap_open_live(interface_name.c_str(), 2048, 0, -1, error_message_buffer);
     if (handle == nullptr) {
-        std::string error = "failed to open network interface: " + interface_name;
-        throw std::runtime_error(error.c_str());
+        char err_buf[1024];
+        sprintf(err_buf, "Failed to open network interface: %s\r\n\t%s", interface_name.c_str(), error_message_buffer);
+        throw std::runtime_error(err_buf);
     }
 
     result = pcap_compile(handle, &sniffer::filter, filter.c_str(), 0, network_addr);

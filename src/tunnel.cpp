@@ -46,10 +46,10 @@ void tunnel::run()
         config::load_config("ping-tunnel.json");
 
         if (config::is_proxy()) {
-            std::cout << "[+] running as proxy" << std::endl;
+            std::cout << "[+] Running as proxy" << std::endl;
             sniffer_filter = "icmp[icmptype] == 8";
         } else {
-            std::cout << "[+] running as forwarder" << std::endl;
+            std::cout << "[+] Running as forwarder" << std::endl;
             sniffer_filter = "icmp[icmptype] == 0";
             initialize_port_mappings();
         }
@@ -95,6 +95,10 @@ void tunnel::initialize_port_mappings()
             throw std::runtime_error(err_buf);
         }
         port_mappings.push_back(mapping);
+        std::cout << "[+] Listening on 0.0.0.0:"
+			      << mapping.local_port
+			      << "\t" << config::get_port_mapping_comments(i)
+			      << std::endl;
     }
 }
 
