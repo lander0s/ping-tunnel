@@ -1,5 +1,5 @@
 # Ping-Tunnel
-C++ [ICMP tunnel](https://en.wikipedia.org/wiki/ICMP_tunnel) implementation
+Firewall evasion using [ICMP tunnel](https://en.wikipedia.org/wiki/ICMP_tunnel)
 
 This tool is based on [ptunnel](https://www.mit.edu/afs.new/sipb/user/golem/tmp/ptunnel-0.61.orig/web/), it allows you to reliably tunnel TCP connections to a remote host using ICMP echo request and reply packets, commonly known as ping requests and replies
 
