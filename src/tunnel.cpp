@@ -96,9 +96,9 @@ void tunnel::initialize_port_mappings()
         }
         port_mappings.push_back(mapping);
         std::cout << "[+] Listening on 0.0.0.0:"
-			      << mapping.local_port
-			      << "\t" << config::get_port_mapping_comments(i)
-			      << std::endl;
+                  << mapping.local_port
+                  << "\t" << config::get_port_mapping_comments(i)
+                  << std::endl;
     }
 }
 
@@ -140,14 +140,14 @@ void tunnel::main_loop()
             }
         }
 
-		connection_map::iterator it = connections.begin();
-        while(it != connections.end()) {
+        connection_map::iterator it = connections.begin();
+        while (it != connections.end()) {
             connection_t* connection = &it->second;
             if (should_send_new_message(connection)) {
                 tunnel_packet_t packet             = get_next_message_to_send(connection);
                 connection->local_sequence_number  = packet.header.seq_no;
                 connection->last_transmission_time = std::chrono::steady_clock::now();
-                connection->resending_counter++;
+                connection->resend_counter++;
 
                 if (config::is_proxy()) {
                     ping_sender::reply(&packet, packet.size(), &connection->tunnel_addr, &connection->last_received_icmp_packet);
@@ -178,16 +178,15 @@ void tunnel::main_loop()
                 }
             }
 
-
-			if (connection->resending_counter > 5) {
+            if (connection->resend_counter > 5) {
                 std::cout << "[-] Connection " << connection->connection_id
-					      << " seems dead, removing..." << std::endl;
+                          << " seems dead, removing..." << std::endl;
                 it++;
                 remove_connection(connection);
                 continue;
-			}
+            }
 
-			it++;
+            it++;
         }
 
         for (auto& it : port_mappings) {
@@ -242,7 +241,7 @@ void tunnel::handle_ack(connection_t* connection, const tunnel_packet_t* packet)
     uint32_t actual_seq_no   = packet->header.seq_no;
 
     if (expected_seq_no == actual_seq_no) {
-        connection->resending_counter = 0;
+        connection->resend_counter = 0;
         std::cout << "[+] Packet confirmed as delivered, seq: " << actual_seq_no << std::endl;
         if (top->is_fin()) {
             remove_connection(connection);
