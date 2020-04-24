@@ -20,7 +20,7 @@ create a file called **ping-tunnel.json** with the following content:
     "network_interface" : "eth0",
 }
 ```
-Replace the field *network_interface* with the interface you want the proxy to listen for pings.  
+Replace the field *network_interface* with the interface you want your server to listen for pings.  
 In the same folder run the program ```./ping-tunnel``` (you need to run it as root/administrator)
 
 #### Client:
@@ -52,7 +52,7 @@ create a file called **ping-tunnel.json** with a content like this:
     ]
 }
 ```
-Replace the field *network_interface* with the interface you want the forwarder to listen for pings.  
+Replace the field *network_interface* with the interface you want your client to listen for pings.  
 In the same folder run the program ```./ping-tunnel``` (you need to run it as root/administrator)
 
 Once you have both facets up and running, you can use your forwarder address/ports as if they were your destination address/port, since the TCP conections will be forwarded
