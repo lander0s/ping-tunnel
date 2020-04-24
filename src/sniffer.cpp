@@ -1,41 +1,36 @@
 #include "sniffer.h"
 #include "networking.h"
+#include <stdexcept>
 #include <string.h>
 
-std::string sniffer::last_error = "";
-pcap_t* sniffer::handle         = nullptr;
+pcap_t* sniffer::handle = nullptr;
 bpf_program sniffer::filter;
 
-bool sniffer::init(const std::string& interface_name, const std::string& filter)
+void sniffer::init(const std::string& interface_name, const std::string& filter)
 {
     bpf_u_int32 subnet_mask;
     bpf_u_int32 network_addr;
     char error_message_buffer[PCAP_ERRBUF_SIZE];
     int result = pcap_lookupnet(interface_name.c_str(), &network_addr, &subnet_mask, error_message_buffer);
     if (result == PCAP_ERROR) {
-        last_error = error_message_buffer;
-        return false;
+        throw std::runtime_error(error_message_buffer);
     }
 
     handle = pcap_open_live(interface_name.c_str(), 2048, 0, -1, error_message_buffer);
     if (handle == nullptr) {
-        last_error = error_message_buffer;
-        return false;
+        std::string error = "failed to open network interface: " + interface_name;
+        throw std::runtime_error(error.c_str());
     }
 
     result = pcap_compile(handle, &sniffer::filter, filter.c_str(), 0, network_addr);
     if (result == PCAP_ERROR) {
-        last_error = error_message_buffer;
-        return false;
+        throw std::runtime_error(error_message_buffer);
     }
 
     result = pcap_setfilter(handle, &sniffer::filter);
     if (result == PCAP_ERROR) {
-        last_error = error_message_buffer;
-        return false;
+        throw std::runtime_error(error_message_buffer);
     }
-
-    return true;
 }
 
 void sniffer::deinit()
@@ -54,11 +49,6 @@ int sniffer::get_next_capture(char* raw_packet, uint16_t len)
     len = header.len > len ? len : header.len;
     memcpy(raw_packet, packet, len);
     return len;
-}
-
-const std::string& sniffer::get_last_error()
-{
-    return last_error;
 }
 
 void sniffer::display_available_interfaces()

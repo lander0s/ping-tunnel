@@ -1,2 +1,20 @@
+
+CC=g++
+
+SOURCE=../../src/main.cpp \
+       ../../src/ping_sender.cpp \
+       ../../src/sniffer.cpp \
+       ../../src/tunnel.cpp \
+       ../../src/utils.cpp \
+       ../../src/config.cpp
+
+INCLUDES=-I ../../libs/popl/include \
+         -I ../../libs/json/include
+
+CFLAGS  = -std=c++11 -lpcap -ggdb
+
 all:
-	g++ ../../src/main.cpp ../../src/ping_sender.cpp ../../src/sniffer.cpp ../../src/tunnel.cpp ../../src/utils.cpp -o ping-tunnel -I ../../libs/popl-master/include -std=c++11 -lpcap -ggdb
+	$(CC) $(SOURCE) $(INCLUDES) $(CFLAGS) -o ping-tunnel
+
+clean:
+	rm ping-tunnel

@@ -6,9 +6,6 @@
 #include <queue>
 #include <string>
 
-using namespace std::chrono;
-using namespace std;
-
 #define TEST(bitflag, mask) ((bitflag & mask) == mask)
 
 static const uint8_t SYN_MASK      = 1 << 0; // new connection
@@ -16,7 +13,7 @@ static const uint8_t PSH_MASK      = 1 << 1; // the message contains data
 static const uint8_t ACK_MASK      = 1 << 2; // acknowledge
 static const uint8_t FIN_MASK      = 1 << 3; // close connection
 static const uint8_t PROXY_MASK    = 1 << 4; // the message was sent by the proxy facet
-static const uint32_t MAGIC_NUMBER = 0x01020304;
+static const uint32_t MAGIC_NUMBER = 0xdeadbeef;
 
 struct tunnel_packet_t {
     struct {
@@ -40,7 +37,7 @@ struct tunnel_packet_t {
     unsigned int size() { return sizeof(header) + header.data_len; }
 };
 
-typedef queue<tunnel_packet_t> packet_queue_t;
+typedef std::queue<tunnel_packet_t> packet_queue_t;
 
 struct connection_t {
     uint32_t connection_id;
@@ -50,22 +47,16 @@ struct connection_t {
     uint32_t local_sequence_number;
     uint32_t remote_sequence_number;
     uint32_t sequence_counter;
-    time_point<steady_clock> last_transmission_time;
+    std::chrono::time_point<std::chrono::steady_clock> last_transmission_time;
     icmp_packet_t last_received_icmp_packet;
     socket_t tcp_socket;
 };
 
-typedef map<uint32_t, connection_t> connection_map_t;
+typedef std::map<uint32_t, connection_t> connection_map_t;
 
 class tunnel {
 private:
-    static string dst_hostname;
-    static uint16_t dst_port;
-
     static connection_map_t connections;
-    static string proxy_hostname;
-    static int listen_port;
-    static bool is_proxy;
     static socket_t listener_socket;
     static void main_loop();
     static connection_t* get_connection(uint32_t connection_id);
@@ -87,6 +78,5 @@ private:
     static void initialize_listener_socket();
 
 public:
-    static void run_as_proxy(const string network_interface);
-    static void run_as_forwarder(const string network_interface, const string& proxy_hostname, int listen_port, const string& dst_address, int dst_port);
+    static void start();
 };

@@ -1,0 +1,10 @@
+{
+    "run_as_proxy": false,
+    "proxy_address": "192.168.0.9",
+    "network_interface": "wlan0",
+    "listen_port": 12345,
+    "destination_address": "192.168.0.9",
+    "destination_port": 12345,
+    "buffer_size": 500,
+    "magic_number": 0xdeadbeef,
+}

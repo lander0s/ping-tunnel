@@ -18,6 +18,22 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\config.h" />
+    <ClInclude Include="..\..\src\networking.h" />
+    <ClInclude Include="..\..\src\ping_sender.h" />
+    <ClInclude Include="..\..\src\sniffer.h" />
+    <ClInclude Include="..\..\src\tunnel.h" />
+    <ClInclude Include="..\..\src\utils.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\config.cpp" />
+    <ClCompile Include="..\..\src\main.cpp" />
+    <ClCompile Include="..\..\src\ping_sender.cpp" />
+    <ClCompile Include="..\..\src\sniffer.cpp" />
+    <ClCompile Include="..\..\src\tunnel.cpp" />
+    <ClCompile Include="..\..\src\utils.cpp" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <ProjectGuid>{ABA50E2D-713D-425A-876F-05B82F78837D}</ProjectGuid>
@@ -138,22 +154,6 @@
       <AdditionalLibraryDirectories>C:\Users\David Landeros\Documents\Developer\C++\pcap-examples\ping-tunnel\libs\npcap-sdk-1.05\Lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClCompile Include="..\..\src\config.cpp" />
-    <ClCompile Include="..\..\src\main.cpp" />
-    <ClCompile Include="..\..\src\ping_sender.cpp" />
-    <ClCompile Include="..\..\src\sniffer.cpp" />
-    <ClCompile Include="..\..\src\tunnel.cpp" />
-    <ClCompile Include="..\..\src\utils.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\..\src\config.h" />
-    <ClInclude Include="..\..\src\networking.h" />
-    <ClInclude Include="..\..\src\ping_sender.h" />
-    <ClInclude Include="..\..\src\sniffer.h" />
-    <ClInclude Include="..\..\src\tunnel.h" />
-    <ClInclude Include="..\..\src\utils.h" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

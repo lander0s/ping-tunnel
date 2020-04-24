@@ -1,50 +1,28 @@
 #include "tunnel.h"
+#include "config.h"
+#include "networking.h"
 #include "ping_sender.h"
 #include "sniffer.h"
-#include "networking.h"
 #include "utils.h"
 #include <chrono>
 #include <iostream>
+#include <stdexcept>
 #include <string.h>
 #include <thread>
 
-string tunnel::dst_hostname;
-uint16_t tunnel::dst_port;
-
-connection_map_t tunnel::connections;
-bool tunnel::is_proxy            = false;
-string tunnel::proxy_hostname    = "";
-int tunnel::listen_port          = 12345;
 socket_t tunnel::listener_socket = INVALID_SOCKET;
+connection_map_t tunnel::connections;
 
-void tunnel::run_as_proxy(const string network_interface)
+void tunnel::start()
 {
-    string sniffer_filter = "icmp[icmptype] == 8"; // ping requests only
-    sniffer::init(network_interface, sniffer_filter);
+    std::cout << "[+] running as " << (config::is_proxy() ? "proxy" : "forwarder") << std::endl;
+    std::string sniffer_filter = config::is_proxy() ? "icmp[icmptype] == 8" : "icmp[icmptype] == 0";
+    sniffer::init(config::get_network_interface(), sniffer_filter);
     ping_sender::init();
 
-    is_proxy = true;
-    main_loop();
-
-    ping_sender::deinit();
-    sniffer::deinit();
-}
-
-void tunnel::run_as_forwarder(
-    const string network_interface, const string& proxy_hostname,
-    int listen_port, const string& dst_address, int dst_port)
-{
-    string sniffer_filter = "icmp[icmptype] == 0"; // ping replies only
-    sniffer::init(network_interface, sniffer_filter);
-    ping_sender::init();
-
-    tunnel::dst_hostname = dst_address;
-    tunnel::dst_port     = dst_port;
-
-    is_proxy               = false;
-    tunnel::proxy_hostname = proxy_hostname;
-    tunnel::listen_port    = listen_port;
-    initialize_listener_socket();
+    if (config::is_proxy() == false) {
+        initialize_listener_socket();
+    }
     main_loop();
 
     ping_sender::deinit();
@@ -56,10 +34,16 @@ void tunnel::initialize_listener_socket()
     listener_socket      = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     sockaddr_in addr     = {};
     addr.sin_family      = AF_INET;
-    addr.sin_port        = htons(listen_port);
+    addr.sin_port        = htons(config::get_listen_port());
     addr.sin_addr.s_addr = INADDR_ANY;
-    bind(listener_socket, (sockaddr*)&addr, sizeof(sockaddr_in));
-    listen(listener_socket, 0);
+    int result           = ::bind(listener_socket, (sockaddr*)&addr, sizeof(sockaddr_in));
+    if (result == -1) {
+        throw std::runtime_error(strerror(errno));
+    }
+    result = ::listen(listener_socket, 0);
+    if (result == -1) {
+        throw std::runtime_error(strerror(errno));
+    }
 }
 
 void tunnel::main_loop()
@@ -105,9 +89,9 @@ void tunnel::main_loop()
             if (should_send_new_message(connection)) {
                 tunnel_packet_t packet             = get_next_message_to_send(connection);
                 connection->local_sequence_number  = packet.header.seq_no;
-                connection->last_transmission_time = steady_clock::now();
+                connection->last_transmission_time = std::chrono::steady_clock::now();
 
-                if (is_proxy) {
+                if (config::is_proxy()) {
                     ping_sender::reply(&packet, packet.size(), &connection->tunnel_addr, &connection->last_received_icmp_packet);
                 } else {
                     ping_sender::send(&packet, packet.size(), &connection->tunnel_addr);
@@ -130,7 +114,9 @@ void tunnel::main_loop()
 
                 if (len <= 0) {
                     send_fin(connection);
-                    cout << "[+] tcp connection closed on " << (is_proxy ? "proxy" : "forwarder") << " side" << endl;
+                    std::cout << "[+] tcp connection closed on "
+                              << (config::is_proxy() ? "proxy" : "forwarder")
+                              << " side" << std::endl;
                 }
             }
         }
@@ -143,7 +129,7 @@ void tunnel::main_loop()
         time.tv_usec = 0;
         if (select(listener_socket + 1, &set, 0, 0, &time) > 0) {
             socket_t new_sock      = accept(listener_socket, nullptr, 0);
-            connection_t* new_conn = add_forwarder_side_connection(new_sock, dst_hostname, dst_port);
+            connection_t* new_conn = add_forwarder_side_connection(new_sock, config::get_dst_address(), config::get_dst_port());
             send_syn(new_conn);
         }
 
@@ -167,7 +153,7 @@ bool tunnel::should_process_packet(const tunnel_packet_t* packet)
         return false;
 
     // the packet must have been created by the oposite facet
-    if (packet->was_sent_by_proxy() == is_proxy)
+    if (packet->was_sent_by_proxy() == config::is_proxy())
         return false;
 
     return true;
@@ -184,7 +170,7 @@ void tunnel::handle_ack(connection_t* connection, const tunnel_packet_t* packet)
     uint32_t actual_seq_no   = packet->header.seq_no;
 
     if (expected_seq_no == actual_seq_no) {
-        cout << "[+] packet confirmed as delivered, seq: " << actual_seq_no << endl;
+        std::cout << "[+] packet confirmed as delivered, seq: " << actual_seq_no << std::endl;
         if (top->is_fin()) {
             remove_connection(connection);
         } else {
@@ -195,7 +181,7 @@ void tunnel::handle_ack(connection_t* connection, const tunnel_packet_t* packet)
 
 void tunnel::handle_push(connection_t* connection, const tunnel_packet_t* packet)
 {
-    cout << "[+] packet received, seq: " << packet->header.seq_no << endl;
+    std::cout << "[+] packet received, seq: " << packet->header.seq_no << std::endl;
     send_ack(connection, packet);
 
     if (connection->remote_sequence_number != packet->header.seq_no) {
@@ -213,7 +199,7 @@ void tunnel::handle_fin(connection_t* connection, const tunnel_packet_t* packet)
     send_ack(connection, packet);
     send_ack(connection, packet);
 
-    cout << "[+] tcp connection closed on " << (is_proxy ? "forwarder" : "proxy") << " side" << endl;
+    std::cout << "[+] tcp connection closed on " << (config::is_proxy() ? "forwarder" : "proxy") << " side" << std::endl;
     remove_connection(connection);
 }
 
@@ -235,11 +221,11 @@ void tunnel::send_ack(connection_t* connection, const tunnel_packet_t* incomming
     ack.header.connection_id = incomming_packet->header.connection_id;
 
     ack.header.flags |= ACK_MASK;
-    if (is_proxy) {
+    if (config::is_proxy()) {
         ack.header.flags |= PROXY_MASK;
     }
 
-    if (is_proxy) {
+    if (config::is_proxy()) {
         ping_sender::reply(&ack, ack.size(), &connection->tunnel_addr, &connection->last_received_icmp_packet);
     } else {
         ping_sender::send(&ack, ack.size(), &connection->tunnel_addr);
@@ -257,7 +243,7 @@ void tunnel::send_syn(connection_t* connection)
     syn.header.seq_no        = connection->sequence_counter++;
 
     syn.header.flags |= SYN_MASK;
-    if (is_proxy) {
+    if (config::is_proxy()) {
         syn.header.flags |= PROXY_MASK;
     }
     connection->outgoing_packets.push(syn);
@@ -274,7 +260,7 @@ void tunnel::send_fin(connection_t* connection)
     fin.header.seq_no        = connection->sequence_counter++;
 
     fin.header.flags |= FIN_MASK;
-    if (is_proxy) {
+    if (config::is_proxy()) {
         fin.header.flags |= PROXY_MASK;
     }
     connection->outgoing_packets.push(fin);
@@ -288,14 +274,14 @@ bool tunnel::should_send_new_message(connection_t* connection)
     }
 
     // or if the last transmition was 500ms ago
-    auto elapsed_time = steady_clock::now() - connection->last_transmission_time;
-    if (duration_cast<milliseconds>(elapsed_time).count() > 1000) {
+    auto elapsed_time = std::chrono::steady_clock::now() - connection->last_transmission_time;
+    if (std::chrono::duration_cast<std::chrono::milliseconds>(elapsed_time).count() > 1000) {
 
         if (connection->outgoing_packets.empty() == false) {
-            cout << "[*] resending unconfirmed packet, seq: "
-                 << connection->outgoing_packets.front().header.seq_no
-                 << ", size: " << connection->outgoing_packets.front().header.data_len
-                 << endl;
+            std::cout << "[*] resending unconfirmed packet, seq: "
+                      << connection->outgoing_packets.front().header.seq_no
+                      << ", size: " << connection->outgoing_packets.front().header.data_len
+                      << std::endl;
         }
 
         return true;
@@ -325,7 +311,9 @@ void tunnel::on_message(connection_t* connection, const char* data, int len)
     int sent = send(connection->tcp_socket, data, len, 0);
     if (sent <= 0) {
         send_fin(connection);
-        cout << "[-] failed to send data through tcp socket: " << strerror(errno) << endl;
+        std::cout << "[-] failed to send data through tcp socket: "
+                  << strerror(errno)
+                  << std::endl;
     }
 }
 
@@ -339,7 +327,7 @@ void tunnel::send_message(connection_t* connection, const char* data, int len)
     packet.header.dst_addr      = connection->destination_addr.sin_addr.s_addr;
     packet.header.dst_port      = connection->destination_addr.sin_port;
     packet.header.flags |= PSH_MASK;
-    if (is_proxy) {
+    if (config::is_proxy()) {
         packet.header.flags |= PROXY_MASK;
     }
     memcpy(packet.data, data, len);
@@ -352,13 +340,13 @@ connection_t* tunnel::add_forwarder_side_connection(socket_t tcp_socket, std::st
     conn.connection_id    = utils::randon_uint32();
     conn.tcp_socket       = tcp_socket;
     conn.sequence_counter = utils::randon_uint32();
-    utils::resolve_host(proxy_hostname, &conn.tunnel_addr);
+    utils::resolve_host(config::get_proxy_address(), &conn.tunnel_addr);
 
     conn.destination_addr = {};
     utils::resolve_host(dst_hostname, &conn.destination_addr);
     conn.destination_addr.sin_port = htons(dst_port);
 
-    cout << "[+] new connection to forward: " << conn.connection_id << endl;
+    std::cout << "[+] new connection to forward: " << conn.connection_id << std::endl;
 
     connections[conn.connection_id] = conn;
     return &connections[conn.connection_id];
@@ -366,7 +354,7 @@ connection_t* tunnel::add_forwarder_side_connection(socket_t tcp_socket, std::st
 
 connection_t* tunnel::add_proxy_side_connection(uint32_t id, const ip_header_t* ip_header, const tunnel_packet_t* initiator)
 {
-    cout << "[+] new connection to forward: " << id << endl;
+    std::cout << "[+] new connection to forward: " << id << std::endl;
 
     connection_t conn     = {};
     conn.connection_id    = id;
@@ -387,7 +375,9 @@ connection_t* tunnel::add_proxy_side_connection(uint32_t id, const ip_header_t* 
     int result      = connect(conn.tcp_socket, (sockaddr*)&conn.destination_addr, sizeof(sockaddr_in));
     if (result == -1) {
         send_fin(&conn);
-        cout << "[-] connection failed: " << strerror(errno) << endl;
+        std::cout << "[-] connection failed: "
+                  << strerror(errno)
+                  << std::endl;
     }
 
     connections[id] = conn;
@@ -396,7 +386,10 @@ connection_t* tunnel::add_proxy_side_connection(uint32_t id, const ip_header_t* 
 
 void tunnel::remove_connection(connection_t* connection)
 {
-    cout << "[+] removing connection with id: " << connection->connection_id << endl;
+    std::cout << "[+] removing connection with id: "
+              << connection->connection_id
+              << std::endl;
+
     if (connection->tcp_socket != INVALID_SOCKET) {
         closesocket(connection->tcp_socket);
         connection->tcp_socket = INVALID_SOCKET;
