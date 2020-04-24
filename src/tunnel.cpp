@@ -114,7 +114,7 @@ void tunnel::main_loop()
             time.tv_sec  = 0;
             time.tv_usec = 0;
             if (select(connection->tcp_socket + 1, &set, 0, 0, &time) > 0) {
-                char buf[sizeof(tunnel_packet_t::data)];
+                char buf[500];
                 int len = recv(connection->tcp_socket, buf, sizeof(buf), 0);
                 if (len > 0) {
                     send_message(connection, buf, len);
