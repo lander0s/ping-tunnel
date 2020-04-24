@@ -54,3 +54,29 @@ Replace the field *network_interface* with the interface you want the forwarder 
 In the same folder run the program ```./ping-tunnel``` (you need to run it as root/administrator)
 
 Once you have both facets up and running, you can use your forwarder address/ports as if they were your destination address/port, since the TCP conections will be forwarded
+
+## Building
+#### Windows
+For Windows you can use the Visual Studio 2019 project located at ```/win/vs2019```
+
+#### Linux
+install dependencies
+```
+sudo apt install libpcap-dev
+```
+and compile
+```
+make
+```
+
+## License
+MIT
+
+## Credits
+This project uses:
+- [json](https://github.com/nlohmann/json) JSON library for Modern C++
+- [popl](https://github.com/badaix/popl) program options parser lib by Johannes Pohl
+- [npcap](https://nmap.org/npcap/) packet sniffing library for Windows 10
+
+#### Author
+David Landeros <dh.landeros08@gmail.com>
