@@ -55,7 +55,7 @@ In the same folder run the program ```./ping-tunnel``` (you need to run it as ro
 
 Once you have both facets up and running, you can use your forwarder address/ports as if they were your destination address/port, since the TCP conections will be forwarded
 
-## Building
+## Compilation
 #### Windows
 For Windows you can use the Visual Studio 2019 project located at ```/win/vs2019```
 
