@@ -25,6 +25,7 @@
 #pragma once
 #include "networking.h"
 #include <string>
+#include <functional>
 
 namespace utils {
 void dump_hex(const void* data, size_t size);
@@ -33,4 +34,5 @@ uint32_t randon_uint32();
 bool initialize_dependencies();
 void deinitialize_dependencies();
 bool resolve_host(const std::string& hostname, sockaddr_in* addr);
+void install_ctrlc_handler(std::function<void(void)> handler);
 } // namespace utils

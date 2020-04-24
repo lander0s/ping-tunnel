@@ -24,7 +24,6 @@
 
 #include "config.h"
 #include <fstream>
-#include <functional>
 #include <iostream>
 #include <json.hpp>
 #include <sstream>

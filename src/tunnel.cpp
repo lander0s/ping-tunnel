@@ -33,7 +33,9 @@
 #include <stdexcept>
 #include <string.h>
 #include <thread>
+#include <functional>
 
+bool tunnel::stopped_by_user = false;
 port_mapping_list tunnel::port_mappings;
 connection_map tunnel::connections;
 
@@ -55,6 +57,9 @@ void tunnel::run()
 
         sniffer::init(config::get_network_interface(), sniffer_filter);
         ping_sender::init();
+		utils::install_ctrlc_handler([](){
+            stopped_by_user = true;
+		});
         main_loop();
     }
 	catch (std::runtime_error e)
@@ -98,7 +103,7 @@ void tunnel::initialize_port_mappings()
 
 void tunnel::main_loop()
 {
-    while (true) {
+    while (!stopped_by_user) {
         char raw_packet[1024];
         int len = sniffer::get_next_capture(raw_packet, 1024);
         if (len > 0) {

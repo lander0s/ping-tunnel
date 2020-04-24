@@ -33,7 +33,14 @@
 #if defined(_WIN32)
 #include <Windows.h>
 #include <tchar.h>
+#else
+#include<stdio.h>
+#include<unistd.h>
+#include<signal.h>
+#include<string.h>
 #endif
+
+std::function<void(void)> ctr_c_handler;
 
 bool utils::initialize_dependencies()
 {
@@ -133,4 +140,38 @@ bool utils::resolve_host(const std::string& hostname, sockaddr_in* addr)
     memcpy(addr, res_info->ai_addr, res_info->ai_addrlen);
     freeaddrinfo(res_info);
     return true;
+}
+
+#if defined(WIN32)
+
+BOOL WINAPI windows_signal_handler(_In_ DWORD dwCtrlType)
+{
+    if (dwCtrlType == dwCtrlType) {
+        ctr_c_handler();
+        return TRUE;
+	}
+    return FALSE;
+}
+
+#else
+
+void linux_signal_handler(int i)
+{
+    ctr_c_handler();
+}
+
+#endif
+
+void utils::install_ctrlc_handler(std::function<void(void)> handler)
+{
+    ctr_c_handler = handler;
+
+#if defined(WIN32)
+    SetConsoleCtrlHandler(windows_signal_handler, TRUE);
+#else
+    struct sigaction action;
+    memset(&action, 0, sizeof(action));
+    action.sa_handler = &linux_signal_handler;
+    sigaction(SIGINT, &action, nullptr);
+#endif
 }
