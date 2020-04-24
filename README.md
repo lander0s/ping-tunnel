@@ -75,8 +75,8 @@ MIT
 ## Credits
 This project uses:
 - [json](https://github.com/nlohmann/json) JSON library for Modern C++
-- [popl](https://github.com/badaix/popl) program options parser lib by Johannes Pohl
-- [npcap](https://nmap.org/npcap/) packet sniffing library for Windows 10
+- [popl](https://github.com/badaix/popl) Program options parser library
+- [npcap](https://nmap.org/npcap/) Packet sniffing library for Windows 10
 
-#### Author
+## Author
 David Landeros <dh.landeros08@gmail.com>
