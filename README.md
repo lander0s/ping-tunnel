@@ -32,8 +32,6 @@ Available options:
     "network_interface" : "eth0",
 }
 ```
-Replace the field *network_interface* with the interface you want your server to listen for pings.  
-In the same folder run the program ```./ping-tunnel``` (you need to run it as root/administrator)
 
 #### Run the client facet using a configuration file like this one:
 ```json
@@ -63,10 +61,7 @@ In the same folder run the program ```./ping-tunnel``` (you need to run it as ro
     ]
 }
 ```
-Replace the field *network_interface* with the interface you want your client to listen for pings.  
-In the same folder run the program ```./ping-tunnel``` (you need to run it as root/administrator)
-
-Once you have both facets up and running, you can use your forwarder address/ports as if they were your destination address/port, since the TCP conections will be forwarded
+You have to run both facets as root/administrator. Once you have everything up and running you can connect to your client (the local ports in the config file) and they will behave as if they were the destination address/port, acting as a transparent proxy.
 
 ## Compilation
 #### Windows
