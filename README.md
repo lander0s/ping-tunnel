@@ -14,8 +14,18 @@ You are being blocked by a firewall when attempting to connect to a certain host
 - Linux
 
 ## Usage
-#### Server:
-create a file called **ping-tunnel.json** with the following content:
+#### Display help with ```ping-tunnel -h```
+```
+Available options:
+  -h, --help        produce this help message
+  -q, --quiet       reduce verbosity
+  -l, --list        display a list of available network interfaces
+  -c, --config arg  specifies the configuration file to use
+
+        config file defaults to ping-tunnel.json
+```
+
+#### Run the server facet using a configuration file like this one:
 ```json
 {
     "run_as_proxy"      : true,
@@ -25,8 +35,7 @@ create a file called **ping-tunnel.json** with the following content:
 Replace the field *network_interface* with the interface you want your server to listen for pings.  
 In the same folder run the program ```./ping-tunnel``` (you need to run it as root/administrator)
 
-#### Client:
-create a file called **ping-tunnel.json** with a content like this:
+#### Run the client facet using a configuration file like this one:
 ```json
 {
     "run_as_proxy"      : false,
