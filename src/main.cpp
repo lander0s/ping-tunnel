@@ -29,10 +29,34 @@
 #include <iostream>
 #include <popl.hpp>
 
+std::string config_file = "ping-tunnel.json";
+
 int main(int argc, char* argv[])
 {
+    popl::OptionParser op("Available options");
+    auto help_option   = op.add<popl::Switch>("h", "help", "produce this help message");
+    auto quiet_option  = op.add<popl::Switch>("q", "quiet", "reduce verbosity");
+    auto list_option   = op.add<popl::Switch>("l", "list", "display a list of available network interfaces");
+    auto config_option = op.add<popl::Value<std::string>>("c", "config", "specifies the configuration file to use");
+    op.parse(argc, argv);
+
+    if (help_option->is_set()) {
+        std::cout << op << std::endl;
+        std::cout << "\tconfig file defaults to ping-tunnel.json" << std::endl;
+        return 0;
+    }
+
+    if (list_option->is_set()) {
+        sniffer::display_available_interfaces();
+        return 0;
+    }
+
+    if (config_option->is_set()) {
+        config_file = config_option->value();
+    }
+
     utils::initialize_dependencies();
-    tunnel::run();
+    tunnel::run(config_file, quiet_option->is_set());
     utils::deinitialize_dependencies();
     return 0;
 }

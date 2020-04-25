@@ -35,15 +35,17 @@
 #include <string.h>
 #include <thread>
 
+bool tunnel::quiet_mode      = false;
 bool tunnel::stopped_by_user = false;
 port_mapping_list tunnel::port_mappings;
 connection_map tunnel::connections;
 
-void tunnel::run()
+void tunnel::run(std::string config_file, bool quiet_mode)
 {
     try {
+        tunnel::quiet_mode = quiet_mode;
         std::string sniffer_filter;
-        config::load_config("ping-tunnel.json");
+        config::load_config(config_file);
 
         if (config::is_proxy()) {
             std::cout << "[+] Running as proxy" << std::endl;
@@ -241,7 +243,11 @@ void tunnel::handle_ack(connection_t* connection, const tunnel_packet_t* packet)
 
     if (expected_seq_no == actual_seq_no) {
         connection->resend_counter = 0;
-        std::cout << "[+] Packet confirmed as delivered, seq: " << actual_seq_no << std::endl;
+
+        if (quiet_mode == false) {
+            std::cout << "[+] Packet confirmed as delivered, seq: " << actual_seq_no << std::endl;
+        }
+
         if (top->is_fin()) {
             remove_connection(connection);
         } else {
@@ -252,7 +258,10 @@ void tunnel::handle_ack(connection_t* connection, const tunnel_packet_t* packet)
 
 void tunnel::handle_push(connection_t* connection, const tunnel_packet_t* packet)
 {
-    std::cout << "[+] Packet received, seq: " << packet->header.seq_no << std::endl;
+    if (quiet_mode == false) {
+        std::cout << "[+] Packet received, seq: " << packet->header.seq_no << std::endl;
+    }
+
     send_ack(connection, packet);
 
     if (connection->remote_sequence_number != packet->header.seq_no) {
@@ -349,7 +358,7 @@ bool tunnel::should_send_new_message(connection_t* connection)
     auto elapsed_time = std::chrono::steady_clock::now() - connection->last_transmission_time;
     if (std::chrono::duration_cast<std::chrono::milliseconds>(elapsed_time).count() > 1000) {
 
-        if (connection->outgoing_packets.empty() == false) {
+        if (quiet_mode == false && connection->outgoing_packets.empty() == false) {
             std::cout << "[*] Resending unconfirmed packet, seq: "
                       << connection->outgoing_packets.front().header.seq_no
                       << ", size: " << connection->outgoing_packets.front().header.data_len

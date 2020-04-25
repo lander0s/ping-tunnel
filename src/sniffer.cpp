@@ -70,7 +70,7 @@ void sniffer::deinit()
 
 int sniffer::get_next_capture(char* raw_packet, uint16_t len)
 {
-    struct pcap_pkthdr *header;
+    struct pcap_pkthdr* header;
     const u_char* packet;
     int result = pcap_next_ex(handle, &header, &packet);
     if (result == PCAP_ERROR) {
@@ -83,7 +83,7 @@ int sniffer::get_next_capture(char* raw_packet, uint16_t len)
         memcpy(raw_packet, packet, len);
         return len;
     }
-	return 0;
+    return 0;
 }
 
 void sniffer::display_available_interfaces()

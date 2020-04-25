@@ -90,6 +90,7 @@ typedef std::vector<port_mapping_t> port_mapping_list;
 
 class tunnel {
 private:
+    static bool quiet_mode;
     static bool stopped_by_user;
     static port_mapping_list port_mappings;
     static connection_map connections;
@@ -114,5 +115,5 @@ private:
     static void cleanup();
 
 public:
-    static void run();
+    static void run(std::string config_file, bool quiet_mode);
 };
