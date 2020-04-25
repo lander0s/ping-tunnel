@@ -147,7 +147,6 @@ void tunnel::main_loop()
                 tunnel_packet_t packet             = get_next_message_to_send(connection);
                 connection->local_sequence_number  = packet.header.seq_no;
                 connection->last_transmission_time = std::chrono::steady_clock::now();
-                connection->resend_counter++;
 
                 if (config::is_proxy()) {
                     ping_sender::reply(&packet, packet.size(), &connection->tunnel_addr, &connection->last_received_icmp_packet);
@@ -366,6 +365,7 @@ bool tunnel::should_send_new_message(connection_t* connection)
 tunnel_packet_t tunnel::get_next_message_to_send(connection_t* connection)
 {
     if (connection->outgoing_packets.empty() == false) {
+        connection->resend_counter++;
         return connection->outgoing_packets.front();
     }
 

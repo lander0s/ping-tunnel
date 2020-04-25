@@ -42,7 +42,7 @@ void sniffer::init(const std::string& interface_name, const std::string& filter)
         throw std::runtime_error(err_buf);
     }
 
-    handle = pcap_open_live(interface_name.c_str(), 2048, 0, -1, error_message_buffer);
+    handle = pcap_open_live(interface_name.c_str(), 1024, 0, -1, error_message_buffer);
     if (handle == nullptr) {
         char err_buf[1024];
         sprintf(err_buf, "Failed to open network interface: %s\r\n\t%s", interface_name.c_str(), error_message_buffer);
@@ -70,14 +70,20 @@ void sniffer::deinit()
 
 int sniffer::get_next_capture(char* raw_packet, uint16_t len)
 {
-    struct pcap_pkthdr header;
-    const u_char* packet = pcap_next(handle, &header);
-    if (packet == nullptr) {
-        return 0;
+    struct pcap_pkthdr *header;
+    const u_char* packet;
+    int result = pcap_next_ex(handle, &header, &packet);
+    if (result == PCAP_ERROR) {
+        char buf[1024];
+        sprintf(buf, "Error capturing packets\r\n\t%s", pcap_geterr(handle));
+        throw std::runtime_error(buf);
     }
-    len = header.len > len ? len : header.len;
-    memcpy(raw_packet, packet, len);
-    return len;
+    if (result == 1) {
+        len = header->len > len ? len : header->len;
+        memcpy(raw_packet, packet, len);
+        return len;
+    }
+	return 0;
 }
 
 void sniffer::display_available_interfaces()
