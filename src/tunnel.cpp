@@ -37,7 +37,7 @@
 
 bool tunnel::stopped_by_user = false;
 port_forwarding_list tunnel::forwardings;
-connection_list tunnel::connections;
+connection_list tunnel::alive_connections;
 
 void tunnel::run(std::string config_file)
 {
@@ -130,8 +130,8 @@ void tunnel::main_loop()
             }
         }
 
-        connection_list::iterator it = connections.begin();
-        while (it != connections.end()) {
+        connection_list::iterator it = alive_connections.begin();
+        while (it != alive_connections.end()) {
             connection* conn = &it->second;
             conn->update();
             if (conn->is_dead) {
@@ -152,8 +152,8 @@ void tunnel::main_loop()
 
 connection* tunnel::get_connection(uint32_t connection_id)
 {
-    connection_list::iterator iterator = connections.find(connection_id);
-    if (iterator != connections.end()) {
+    connection_list::iterator iterator = alive_connections.find(connection_id);
+    if (iterator != alive_connections.end()) {
         return &iterator->second;
     }
     return nullptr;
@@ -166,7 +166,9 @@ bool tunnel::should_process_packet(const tunnel_packet* packet)
         return false;
     }
 
-    // the packet must have been created by the oposite facet
+    // the packet must have been created by the opposite facet.
+	// this ignores Operating System replies which are an exact
+	// copy of the originally sent ping
     if (packet->was_sent_by_proxy() == config::is_proxy()) {
         return false;
     }
@@ -176,7 +178,7 @@ bool tunnel::should_process_packet(const tunnel_packet* packet)
 
 void tunnel::handle_syn(const ip_header_t* ip_header, icmp_packet_t* icmp_packet, const tunnel_packet* packet)
 {
-    // it only creates the connection if it not exists
+    // it only creates the connection if not exists
     connection* conn = get_connection(packet->header.connection_id);
     if (conn == nullptr) {
         conn = add_connection(packet->header.connection_id, ip_header, icmp_packet, packet);
@@ -207,15 +209,15 @@ connection* tunnel::add_connection(socket_t tcp_socket, std::string dst_hostname
 {
     connection conn(tcp_socket, dst_hostname, dst_port);
     uint32_t id = conn.connection_id;
-    connections.emplace(id, std::move(conn));
-    return &connections.at(id);
+    alive_connections.emplace(id, std::move(conn));
+    return &alive_connections.at(id);
 }
 
 connection* tunnel::add_connection(uint32_t id, const ip_header_t* ip_header, icmp_packet_t* icmp_packet, const tunnel_packet* syn_packet)
 {
     connection conn(id, ip_header, icmp_packet, syn_packet);
-    connections.emplace(id, std::move(conn));
-    return &connections.at(id);
+    alive_connections.emplace(id, std::move(conn));
+    return &alive_connections.at(id);
 }
 
 void tunnel::remove_connection(connection* conn)
@@ -224,17 +226,17 @@ void tunnel::remove_connection(connection* conn)
               << conn->connection_id
               << std::endl;
     conn->destroy_tcp_connection();
-    connections.erase(conn->connection_id);
+    alive_connections.erase(conn->connection_id);
 }
 
 void tunnel::cleanup()
 {
     std::cout << "[+] Gracefully shutting down... " << std::endl;
-    for (auto& it : connections) {
+    for (auto& it : alive_connections) {
         connection* conn = &it.second;
         conn->destroy_tcp_connection();
     }
-    connections.clear();
+    alive_connections.clear();
 
     for (auto& it : forwardings) {
         port_forwarding port_fwd = it;

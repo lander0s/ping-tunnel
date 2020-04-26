@@ -40,7 +40,7 @@ class tunnel {
 private:
     static bool stopped_by_user;
     static port_forwarding_list forwardings;
-    static connection_list connections;
+    static connection_list alive_connections;
     static connection* get_connection(uint32_t connection_id);
     static connection* add_connection(socket_t tcp_socket, std::string dst_hostname, int dst_port);
     static connection* add_connection(uint32_t id, const ip_header_t* ip_header, icmp_packet_t* icmp_packet, const tunnel_packet* syn_packet);
