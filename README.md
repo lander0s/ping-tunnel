@@ -8,10 +8,10 @@ You are being blocked by a firewall when attempting to connect to a certain host
 
 ## In contrast with ptunnel, this tool:
 - Allows you to forward multiple TCP ports to different destinations at the same time (see [config file](https://github.com/DavidLanderosAlcala/ping-tunnel/blob/master/ping-tunnel.json))
-- Works on Windows (no mingw required)
+- Works on Windows 10 (No MinGW required)
 
 ## Supported platforms
-- Windows
+- Windows 10
 - Linux
 
 ## Usage
@@ -66,7 +66,8 @@ You have to run both facets as root/administrator. Once you have everything up a
 
 ## Compilation
 #### Windows
-For Windows you can use the Visual Studio 2019 project located at ```/win/vs2019```
+For Windows you can use the Visual Studio 2019 project located at ```/win/vs2019```  
+Before running the program you need to install [npcap](https://nmap.org/npcap/) (the pcap for Windows 10)
 
 #### Linux
 install dependencies
@@ -86,6 +87,7 @@ This project uses:
 - [json](https://github.com/nlohmann/json) JSON library for Modern C++
 - [popl](https://github.com/badaix/popl) Program options parser library
 - [npcap](https://nmap.org/npcap/) Packet sniffing library for Windows 10
+- [libpcap](https://www.tcpdump.org/) Packet sniffing library for Linux
 
 ## Author
 David Landeros <dh.landeros08@gmail.com>
