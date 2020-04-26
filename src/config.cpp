@@ -107,8 +107,8 @@ int config::get_destination_port(unsigned int index)
 
 std::string config::get_port_forwarding_description(int index)
 {
-    if (json_obj["port_forwarding"][index]["descrioption"].is_string()) {
-        return json_obj["port_forwarding"][index]["descrioption"].get<std::string>();
+    if (json_obj["port_forwarding"][index]["description"].is_string()) {
+        return json_obj["port_forwarding"][index]["description"].get<std::string>();
     }
     return "";
 }
