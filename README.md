@@ -39,21 +39,21 @@ Available options:
     "run_as_proxy"      : false,
     "proxy_address"     : "192.168.0.9",
     "network_interface" : "eth0",
-    "port_mappings" : [
+    "port_forwarding" : [
         {
-            "__comments"          : "SMTP server",
+            "description"         : "SMTP server",
             "local_port"          : 25,
             "destination_port"    : 25,
             "destination_address" : "otherserver.com"
         },
         {
-            "__comments"          : "IMAP server",
+            "description"         : "IMAP server",
             "local_port"          : 143,
             "destination_port"    : 143,
             "destination_address" : "otherserver.com"
         },
         {
-            "__comments"          : "Mysql server",
+            "description"         : "Mysql server",
             "local_port"          : 3306,
             "destination_port"    : 3306,
             "destination_address" : "192.168.0.9"
