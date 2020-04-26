@@ -57,15 +57,15 @@ void config::verify_config()
 
     if (is_proxy() == false) {
         REQUIRE(json_obj, "proxy_address", is_string, "string");
-        REQUIRE(json_obj, "port_mappings", is_array, "array");
-        size_t mappigs_count = json_obj["port_mappings"].size();
+        REQUIRE(json_obj, "port_forwarding", is_array, "array");
+        size_t mappigs_count = json_obj["port_forwarding"].size();
         if (mappigs_count == 0) {
-            throw std::runtime_error("you need to define at least one port mapping");
+            throw std::runtime_error("you need to define at least one port forwarding");
         }
         for (int i = 0; i < mappigs_count; i++) {
-            REQUIRE(json_obj["port_mappings"][i], "local_port", is_number, "number (check port_mappings array)");
-            REQUIRE(json_obj["port_mappings"][i], "destination_port", is_number, "number (check port_mappings array)");
-            REQUIRE(json_obj["port_mappings"][i], "destination_address", is_string, "string (check port_mappings array)");
+            REQUIRE(json_obj["port_forwarding"][i], "local_port", is_number, "number (check port_mappings array)");
+            REQUIRE(json_obj["port_forwarding"][i], "destination_port", is_number, "number (check port_mappings array)");
+            REQUIRE(json_obj["port_forwarding"][i], "destination_address", is_string, "string (check port_mappings array)");
         }
     }
 }
@@ -85,30 +85,30 @@ std::string config::get_network_interface()
     return json_obj["network_interface"].get<std::string>();
 }
 
-int config::get_port_mapping_count()
+int config::get_port_forwarding_count()
 {
-    return (int)json_obj["port_mappings"].size();
+    return (int)json_obj["port_forwarding"].size();
 }
 
 int config::get_local_port(unsigned int index)
 {
-    return json_obj["port_mappings"][index]["local_port"].get<int>();
+    return json_obj["port_forwarding"][index]["local_port"].get<int>();
 }
 
 std::string config::get_destination_address(unsigned int index)
 {
-    return json_obj["port_mappings"][index]["destination_address"].get<std::string>();
+    return json_obj["port_forwarding"][index]["destination_address"].get<std::string>();
 }
 
 int config::get_destination_port(unsigned int index)
 {
-    return json_obj["port_mappings"][index]["destination_port"].get<int>();
+    return json_obj["port_forwarding"][index]["destination_port"].get<int>();
 }
 
-std::string config::get_port_mapping_comments(int index)
+std::string config::get_port_forwarding_description(int index)
 {
-    if (json_obj["port_mappings"][index]["__comments"].is_string()) {
-        return json_obj["port_mappings"][index]["__comments"].get<std::string>();
+    if (json_obj["port_forwarding"][index]["descrioption"].is_string()) {
+        return json_obj["port_forwarding"][index]["descrioption"].get<std::string>();
     }
     return "";
 }

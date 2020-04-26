@@ -37,7 +37,7 @@
 
 bool tunnel::quiet_mode      = false;
 bool tunnel::stopped_by_user = false;
-port_mapping_list tunnel::port_mappings;
+port_forwarding_list tunnel::forwardings;
 connection_map tunnel::connections;
 
 void tunnel::run(std::string config_file, bool quiet_mode)
@@ -53,7 +53,7 @@ void tunnel::run(std::string config_file, bool quiet_mode)
         } else {
             std::cout << "[+] Running as forwarder" << std::endl;
             sniffer_filter = "icmp[icmptype] == 0";
-            initialize_port_mappings();
+            initialize_port_forwarding();
         }
 
 		utils::install_ctrlc_handler([]() {
@@ -72,35 +72,35 @@ void tunnel::run(std::string config_file, bool quiet_mode)
     sniffer::deinit();
 }
 
-void tunnel::initialize_port_mappings()
+void tunnel::initialize_port_forwarding()
 {
-    int count = config::get_port_mapping_count();
+    int count = config::get_port_forwarding_count();
     for (int i = 0; i < count; i++) {
-        port_mapping_t mapping;
-        mapping.dst_hostname    = config::get_destination_address(i);
-        mapping.dst_port        = config::get_destination_port(i);
-        mapping.local_port      = config::get_local_port(i);
-        mapping.listener_socket = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+        port_forwarding forwarding;
+        forwarding.dst_hostname   = config::get_destination_address(i);
+        forwarding.dst_port       = config::get_destination_port(i);
+        forwarding.local_port     = config::get_local_port(i);
+        forwarding.listener_socket = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
         sockaddr_in addr        = {};
         addr.sin_family         = AF_INET;
-        addr.sin_port           = htons(mapping.local_port);
+        addr.sin_port              = htons(forwarding.local_port);
         addr.sin_addr.s_addr    = INADDR_ANY;
-        int result              = ::bind(mapping.listener_socket, (sockaddr*)&addr, sizeof(sockaddr_in));
+        int result                 = ::bind(forwarding.listener_socket, (sockaddr*)&addr, sizeof(sockaddr_in));
         if (result == -1) {
             char err_buf[1024];
-            sprintf(err_buf, "Couldn't listen on port %d, %s", mapping.local_port, strerror(errno));
+            sprintf(err_buf, "Couldn't listen on port %d, %s", forwarding.local_port, strerror(errno));
             throw std::runtime_error(err_buf);
         }
-        result = ::listen(mapping.listener_socket, 0);
+        result = ::listen(forwarding.listener_socket, 0);
         if (result == -1) {
             char err_buf[1024];
-            sprintf(err_buf, "Couldn't listen on port %d, %s", mapping.local_port, strerror(errno));
+            sprintf(err_buf, "Couldn't listen on port %d, %s", forwarding.local_port, strerror(errno));
             throw std::runtime_error(err_buf);
         }
-        port_mappings.push_back(mapping);
+        forwardings.push_back(forwarding);
         std::cout << "[+] Listening on 0.0.0.0:"
-                  << mapping.local_port
-                  << "\t" << config::get_port_mapping_comments(i)
+                  << forwarding.local_port
+                  << "\t" << config::get_port_forwarding_description(i)
                   << std::endl;
     }
 }
@@ -165,7 +165,8 @@ void tunnel::main_loop()
             FD_SET(connection->tcp_socket, &set);
             time.tv_sec  = 0;
             time.tv_usec = 0;
-            if (select(connection->tcp_socket + 1, &set, 0, 0, &time) > 0) {
+            int max_socket = static_cast<int>(connection->tcp_socket) + 1;
+            if (select(max_socket, &set, 0, 0, &time) > 0) {
                 char buf[500];
                 int len = recv(connection->tcp_socket, buf, sizeof(buf), 0);
                 if (len > 0) {
@@ -191,17 +192,18 @@ void tunnel::main_loop()
             it++;
         }
 
-        for (auto& it : port_mappings) {
-            port_mapping_t mapping = it;
+        for (auto& it : forwardings) {
+            port_forwarding fwd = it;
             fd_set set;
             timeval time;
             FD_ZERO(&set);
-            FD_SET(mapping.listener_socket, &set);
+            FD_SET(fwd.listener_socket, &set);
             time.tv_sec  = 0;
             time.tv_usec = 0;
-            if (select(mapping.listener_socket + 1, &set, 0, 0, &time) > 0) {
-                socket_t new_sock      = accept(mapping.listener_socket, nullptr, 0);
-                connection_t* new_conn = add_forwarder_side_connection(new_sock, mapping.dst_hostname, mapping.dst_port);
+            int max_socket = static_cast<int>(fwd.listener_socket) + 1;
+            if (select(max_socket, &set, 0, 0, &time) > 0) {
+                socket_t new_sock      = accept(fwd.listener_socket, nullptr, 0);
+                connection_t* new_conn = add_forwarder_side_connection(new_sock, fwd.dst_hostname, fwd.dst_port);
                 send_syn(new_conn);
             }
         }
@@ -492,12 +494,12 @@ void tunnel::cleanup()
     }
     connections.clear();
 
-    for (auto& it : port_mappings) {
-        port_mapping_t mapping = it;
-        if (mapping.listener_socket != INVALID_SOCKET) {
-            closesocket(mapping.listener_socket);
-            mapping.listener_socket = INVALID_SOCKET;
+    for (auto& it : forwardings) {
+        port_forwarding port_fwd = it;
+        if (port_fwd.listener_socket != INVALID_SOCKET) {
+            closesocket(port_fwd.listener_socket);
+            port_fwd.listener_socket = INVALID_SOCKET;
         }
     }
-    port_mappings.clear();
+    forwardings.clear();
 }

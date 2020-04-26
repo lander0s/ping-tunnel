@@ -79,20 +79,20 @@ struct connection_t {
 
 typedef std::map<uint32_t, connection_t> connection_map;
 
-struct port_mapping_t {
+struct port_forwarding {
     uint16_t local_port;
     uint16_t dst_port;
     std::string dst_hostname;
     socket_t listener_socket;
 };
 
-typedef std::vector<port_mapping_t> port_mapping_list;
+typedef std::vector<port_forwarding> port_forwarding_list;
 
 class tunnel {
 private:
     static bool quiet_mode;
     static bool stopped_by_user;
-    static port_mapping_list port_mappings;
+    static port_forwarding_list forwardings;
     static connection_map connections;
     static void main_loop();
     static connection_t* get_connection(uint32_t connection_id);
@@ -111,7 +111,7 @@ private:
     static connection_t* add_forwarder_side_connection(socket_t tcp_socket, std::string dst_hostname, int dst_port);
     static connection_t* add_proxy_side_connection(uint32_t id, const ip_header_t* ip_header, const tunnel_packet_t* initiator);
     static void remove_connection(connection_t* connection);
-    static void initialize_port_mappings();
+    static void initialize_port_forwarding();
     static void cleanup();
 
 public:
