@@ -70,7 +70,7 @@ For Windows you can use the Visual Studio 2019 project located at ```/win/vs2019
 #### Linux
 install dependencies
 ```
-sudo apt install libpcap-dev
+sudo apt install libpcap0.8 libpcap-dev
 ```
 and compile
 ```
