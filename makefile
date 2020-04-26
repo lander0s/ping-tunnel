@@ -5,6 +5,7 @@ SOURCE=./src/main.cpp \
        ./src/ping_sender.cpp \
        ./src/sniffer.cpp \
        ./src/tunnel.cpp \
+       ./src/connection.cpp \
        ./src/utils.cpp \
        ./src/config.cpp
 

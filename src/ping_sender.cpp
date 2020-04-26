@@ -23,7 +23,7 @@
  */
 
 #include "ping_sender.h"
-#include "networking.h"
+#include "net.h"
 #include "utils.h"
 #include <iostream>
 #include <string.h>
@@ -87,6 +87,7 @@ bool ping_sender::reply(const void* reply_payload, unsigned int reply_payload_le
 
     if (sendto(raw_socket, (char*)&reply, reply_len, 0, (sockaddr*)addr, sizeof(sockaddr_in)) < 0) {
         last_error = "reply function failed";
+        std::cout << "reply function failed" << std::endl;
         return false;
     }
     return true;

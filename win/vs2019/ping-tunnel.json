@@ -1,18 +1,12 @@
 {
-    "run_as_proxy"      : false,
+    "run_as_proxy"      : true,
     "proxy_address"     : "192.168.0.9",
     "network_interface" : "\\Device\\NPF_{EED844F6-F6EC-4D0B-9FCA-52F474164A4B}",
-    "port_mappings" : [
+    "port_forwarding" : [
         {
-            "__comments"          : "SMTP server",
+            "description"         : "Testing port",
             "local_port"          : 12345,
             "destination_port"    : 12345,
-            "destination_address" : "127.0.0.1"
-        },
-        {
-            "__comments"          : "SMTP server",
-            "local_port"          : 12346,
-            "destination_port"    : 12346,
             "destination_address" : "127.0.0.1"
         }
     ]

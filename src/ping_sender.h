@@ -23,7 +23,7 @@
  */
 
 #pragma once
-#include "networking.h"
+#include "net.h"
 #include <string>
 
 class ping_sender {

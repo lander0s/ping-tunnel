@@ -20,7 +20,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\config.h" />
-    <ClInclude Include="..\..\src\networking.h" />
+    <ClInclude Include="..\..\src\connection.h" />
+    <ClInclude Include="..\..\src\net.h" />
     <ClInclude Include="..\..\src\ping_sender.h" />
     <ClInclude Include="..\..\src\sniffer.h" />
     <ClInclude Include="..\..\src\tunnel.h" />
@@ -28,6 +29,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\config.cpp" />
+    <ClCompile Include="..\..\src\connection.cpp" />
     <ClCompile Include="..\..\src\main.cpp" />
     <ClCompile Include="..\..\src\ping_sender.cpp" />
     <ClCompile Include="..\..\src\sniffer.cpp" />

@@ -23,10 +23,10 @@
  */
 
 #include "sniffer.h"
-#include "networking.h"
+#include "net.h"
+#include <iostream>
 #include <stdexcept>
 #include <string.h>
-#include <iostream>
 
 pcap_t* sniffer::handle = nullptr;
 bpf_program sniffer::filter;
@@ -90,7 +90,6 @@ int sniffer::get_next_capture(char* raw_packet, uint16_t len)
 void sniffer::display_available_interfaces()
 {
     pcap_if_t *devs, *current_device;
-    pcap_addr_t* current_address;
     char errbuf[PCAP_ERRBUF_SIZE + 1];
     pcap_findalldevs(&devs, errbuf);
 
