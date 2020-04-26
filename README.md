@@ -7,8 +7,9 @@ This tool is based on [ptunnel](https://www.mit.edu/afs.new/sipb/user/golem/tmp/
 You are being blocked by a firewall when attempting to connect to a certain host but you can send and receive pings, then you can tunnel your TCP connections using this **"ping proxy"**
 
 ## In contrast with ptunnel, this tool:
-- allow you to "map" multiple ports to different destinations at the same time (see [config file](https://github.com/DavidLanderosAlcala/ping-tunnel/blob/master/ping-tunnel.json))
-- works on Windows (both facets: server and client)
+- Allows you to forward multiple TCP ports to different destinations at the same time (see [config file](https://github.com/DavidLanderosAlcala/ping-tunnel/blob/master/ping-tunnel.json))
+- Works on Windows (no mingw required)
+
 ## Supported platforms
 - Windows
 - Linux
