@@ -22,7 +22,7 @@ Available options:
   -l, --list        display a list of available network interfaces
   -c, --config arg  specifies the configuration file to use
 
-        config file defaults to ping-tunnel.json
+        config file defaults to ./ping-tunnel.json
 ```
 
 #### Run the server facet using a configuration file like this one:
