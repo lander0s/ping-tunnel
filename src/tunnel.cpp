@@ -56,11 +56,12 @@ void tunnel::run(std::string config_file, bool quiet_mode)
             initialize_port_mappings();
         }
 
-        sniffer::init(config::get_network_interface(), sniffer_filter);
-        ping_sender::init();
-        utils::install_ctrlc_handler([]() {
+		utils::install_ctrlc_handler([]() {
             stopped_by_user = true;
         });
+
+        sniffer::init(config::get_network_interface(), sniffer_filter);
+        ping_sender::init();
         main_loop();
     } catch (std::runtime_error e) {
         std::cout << "[-] " << e.what() << std::endl;

@@ -26,6 +26,7 @@
 #include "networking.h"
 #include <stdexcept>
 #include <string.h>
+#include <iostream>
 
 pcap_t* sniffer::handle = nullptr;
 bpf_program sniffer::filter;
@@ -88,26 +89,16 @@ int sniffer::get_next_capture(char* raw_packet, uint16_t len)
 
 void sniffer::display_available_interfaces()
 {
-    pcap_if_t *devs, *cur_dev;
-    pcap_addr_t* cur_addr;
+    pcap_if_t *devs, *current_device;
+    pcap_addr_t* current_address;
     char errbuf[PCAP_ERRBUF_SIZE + 1];
-
     pcap_findalldevs(&devs, errbuf);
 
-    printf("Available pcap devices:\n");
-    for (cur_dev = devs; cur_dev; cur_dev = cur_dev->next) {
-        if (cur_dev->description)
-            printf(
-                "\n\t%s%c '%s'\n", cur_dev->name, (cur_dev->addresses ? ':' : ' '),
-                cur_dev->description);
-        else
-            printf("\n\t%s%c\n", cur_dev->name, (cur_dev->addresses ? ':' : ' '));
-        for (cur_addr = cur_dev->addresses; cur_addr; cur_addr = cur_addr->next) {
-            if (cur_addr->addr->sa_family == AF_INET)
-                printf(
-                    "\t\t%s\n",
-                    inet_ntoa(((struct sockaddr_in*)cur_addr->addr)->sin_addr));
-        }
+    std::cout << "Available network interfaces:\r\n\r\n";
+    for (current_device = devs; current_device; current_device = current_device->next) {
+        std::cout << "\t- " << current_device->name
+                  << " (" << current_device->description << ")\r\n";
     }
+    std::cout << std::endl;
     pcap_freealldevs(devs);
 }
