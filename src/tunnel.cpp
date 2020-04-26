@@ -125,19 +125,7 @@ void tunnel::main_loop()
                 }
 
                 if (conn) {
-                    conn->last_received_icmp_packet = *icmp_packet;
-
-                    if (tun_packet->is_ack()) {
-                        conn->handle_ack(tun_packet);
-                    }
-
-                    if (tun_packet->is_psh()) {
-                        conn->handle_push(tun_packet);
-                    }
-
-                    if (tun_packet->is_fin()) {
-                        conn->handle_fin(tun_packet);
-                    }
+                    conn->on_tunnel_packet(tun_packet, icmp_packet);
                 }
             }
         }
@@ -154,7 +142,7 @@ void tunnel::main_loop()
             it++;
         }
 
-		if (config::is_proxy() == false) {
+        if (config::is_proxy() == false) {
             check_new_connections();
         }
 
@@ -181,18 +169,17 @@ bool tunnel::should_process_packet(const tunnel_packet* packet)
     // the packet must have been created by the oposite facet
     if (packet->was_sent_by_proxy() == config::is_proxy()) {
         return false;
-	}
+    }
 
     return true;
 }
 
 void tunnel::handle_syn(const ip_header_t* ip_header, icmp_packet_t* icmp_packet, const tunnel_packet* packet)
 {
-    // only create the connection if it does not exist previously
+    // it only creates the connection if it not exists
     connection* conn = get_connection(packet->header.connection_id);
     if (conn == nullptr) {
-        conn                            = add_connection(packet->header.connection_id, ip_header, packet);
-        conn->last_received_icmp_packet = *icmp_packet;
+        conn = add_connection(packet->header.connection_id, ip_header, icmp_packet, packet);
     }
     conn->send_ack(packet);
 }
@@ -218,54 +205,17 @@ void tunnel::check_new_connections()
 
 connection* tunnel::add_connection(socket_t tcp_socket, std::string dst_hostname, int dst_port)
 {
-    connection conn       = {};
-    conn.is_dead          = false;
-    conn.connection_id    = utils::randon_uint32();
-    conn.tcp_socket       = tcp_socket;
-    conn.sequence_counter = utils::randon_uint32();
-    utils::resolve_host(config::get_proxy_address(), &conn.tunnel_addr);
-
-    conn.destination_addr = {};
-    utils::resolve_host(dst_hostname, &conn.destination_addr);
-    conn.destination_addr.sin_port = htons(dst_port);
-
-    std::cout << "[+] New connection to forward: " << conn.connection_id << std::endl;
-
-    connections[conn.connection_id] = conn;
-    return &connections[conn.connection_id];
+    connection conn(tcp_socket, dst_hostname, dst_port);
+    uint32_t id = conn.connection_id;
+    connections.emplace(id, std::move(conn));
+    return &connections.at(id);
 }
 
-connection* tunnel::add_connection(uint32_t id, const ip_header_t* ip_header, const tunnel_packet* initiator)
+connection* tunnel::add_connection(uint32_t id, const ip_header_t* ip_header, icmp_packet_t* icmp_packet, const tunnel_packet* syn_packet)
 {
-    std::cout << "[+] New connection to forward: " << id << std::endl;
-
-    connection conn       = {};
-    conn.is_dead          = false;
-    conn.connection_id    = id;
-    conn.sequence_counter = utils::randon_uint32();
-
-    // discover tunnel addr from ip header of incomming ping
-    conn.tunnel_addr                 = {};
-    conn.tunnel_addr.sin_family      = AF_INET;
-    conn.tunnel_addr.sin_addr.s_addr = ip_header->ip_srcaddr;
-
-    // discover destination addr from incomming tunnel packet
-    conn.destination_addr                 = {};
-    conn.destination_addr.sin_family      = AF_INET;
-    conn.destination_addr.sin_addr.s_addr = initiator->header.dst_addr;
-    conn.destination_addr.sin_port        = initiator->header.dst_port;
-
-    conn.tcp_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    int result      = connect(conn.tcp_socket, (sockaddr*)&conn.destination_addr, sizeof(sockaddr_in));
-    if (result == -1) {
-        conn.send_fin();
-        std::cout << "[-] Connection failed: "
-                  << strerror(errno)
-                  << std::endl;
-    }
-
-    connections[id] = conn;
-    return &connections[id];
+    connection conn(id, ip_header, icmp_packet, syn_packet);
+    connections.emplace(id, std::move(conn));
+    return &connections.at(id);
 }
 
 void tunnel::remove_connection(connection* conn)
@@ -273,7 +223,7 @@ void tunnel::remove_connection(connection* conn)
     std::cout << "[+] Removing connection with id: "
               << conn->connection_id
               << std::endl;
-    conn->destroy();
+    conn->destroy_tcp_connection();
     connections.erase(conn->connection_id);
 }
 
@@ -282,7 +232,7 @@ void tunnel::cleanup()
     std::cout << "[+] Gracefully shutting down... " << std::endl;
     for (auto& it : connections) {
         connection* conn = &it.second;
-        conn->destroy();
+        conn->destroy_tcp_connection();
     }
     connections.clear();
 

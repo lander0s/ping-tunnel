@@ -43,10 +43,10 @@ private:
     static connection_list connections;
     static connection* get_connection(uint32_t connection_id);
     static connection* add_connection(socket_t tcp_socket, std::string dst_hostname, int dst_port);
-    static connection* add_connection(uint32_t id, const ip_header_t* ip_header, const tunnel_packet* initiator);
+    static connection* add_connection(uint32_t id, const ip_header_t* ip_header, icmp_packet_t* icmp_packet, const tunnel_packet* syn_packet);
     static void remove_connection(connection* connection);
 
-	static void main_loop();
+    static void main_loop();
     static bool should_process_packet(const tunnel_packet* packet);
     static void handle_syn(const ip_header_t* ip_header, icmp_packet_t* icmp_packet, const tunnel_packet* packet);
 

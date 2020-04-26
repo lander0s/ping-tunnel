@@ -5,6 +5,74 @@
 #include "utils.h"
 #include <iostream>
 
+connection::connection(connection&& conn)
+    : is_dead(conn.is_dead)
+    , connection_id(conn.connection_id)
+    , resend_counter(conn.resend_counter)
+    , tunnel_addr(conn.tunnel_addr)
+    , destination_addr(conn.destination_addr)
+    , local_sequence_number(conn.local_sequence_number)
+    , remote_sequence_number(conn.remote_sequence_number)
+    , sequence_counter(conn.sequence_counter)
+    , last_transmission_time(conn.last_transmission_time)
+    , last_received_icmp_packet(conn.last_received_icmp_packet)
+    , tcp_socket(conn.tcp_socket)
+    , outgoing_packets(conn.outgoing_packets)
+{
+}
+
+// constructor used by the proxy facet
+connection::connection(uint32_t id, const ip_header_t* ip_header, icmp_packet_t* icmp_packet, const tunnel_packet* syn_packet)
+    : is_dead(false)
+    , connection_id(id)
+    , last_received_icmp_packet(*icmp_packet)
+    , sequence_counter(utils::randon_uint32())
+    , resend_counter(0)
+    , local_sequence_number(0)
+    , remote_sequence_number(0)
+{
+    std::cout << "[+] New connection to forward: " << id << std::endl;
+
+    // discover tunnel addr from ip header of incomming ping
+    tunnel_addr                 = {};
+    tunnel_addr.sin_family      = AF_INET;
+    tunnel_addr.sin_addr.s_addr = ip_header->ip_srcaddr;
+
+    // discover destination addr from incomming tunnel packet
+    destination_addr                 = {};
+    destination_addr.sin_family      = AF_INET;
+    destination_addr.sin_addr.s_addr = syn_packet->header.dst_addr;
+    destination_addr.sin_port        = syn_packet->header.dst_port;
+
+    tcp_socket = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    int result = ::connect(tcp_socket, (sockaddr*)&destination_addr, sizeof(sockaddr_in));
+    if (result == -1) {
+        send_fin();
+        std::cout << "[-] Connection failed: "
+                  << strerror(errno)
+                  << std::endl;
+    }
+}
+
+// constructor used by the forwarder facet
+connection::connection(socket_t socket, std::string dst_hostname, int dst_port)
+    : is_dead(false)
+    , tcp_socket(socket)
+    , resend_counter(0)
+    , connection_id(utils::randon_uint32())
+    , sequence_counter(utils::randon_uint32())
+    , local_sequence_number(0)
+    , remote_sequence_number(0)
+    , last_received_icmp_packet()
+{
+    utils::resolve_host(config::get_proxy_address(), &tunnel_addr);
+    destination_addr = {};
+    utils::resolve_host(dst_hostname, &destination_addr);
+    destination_addr.sin_port = htons(dst_port);
+
+    std::cout << "[+] New connection to forward: " << connection_id << std::endl;
+}
+
 void connection::update()
 {
     if (should_send_new_message()) {
@@ -20,33 +88,52 @@ void connection::update()
         }
     }
 
-    // poll tcp events
-    fd_set set;
-    timeval time;
-    FD_ZERO(&set);
-    FD_SET(tcp_socket, &set);
-    time.tv_sec    = 0;
-    time.tv_usec   = 0;
-    int max_socket = static_cast<int>(tcp_socket) + 1;
-    if (select(max_socket, &set, 0, 0, &time) > 0) {
-        char buf[500];
-        int len = recv(tcp_socket, buf, sizeof(buf), 0);
-        if (len > 0) {
-            send_message(buf, len);
-        }
+    if (tcp_socket != INVALID_SOCKET) {
+        fd_set set   = {};
+        timeval time = {};
+        FD_ZERO(&set);
+        FD_SET(tcp_socket, &set);
+        int max_socket = static_cast<int>(tcp_socket) + 1;
+        if (select(max_socket, &set, 0, 0, &time) > 0) {
+            char buf[500];
+            int len = recv(tcp_socket, buf, sizeof(buf), 0);
+            if (len > 0) {
+                send_message(buf, len);
+            }
 
-        if (len <= 0) {
-            send_fin();
-            std::cout << "[+] TCP connection closed on "
-                      << (config::is_proxy() ? "proxy" : "forwarder")
-                      << " side" << std::endl;
+            if (len <= 0) {
+                send_fin();
+                std::cout << "[+] TCP connection closed on "
+                          << (config::is_proxy() ? "proxy" : "forwarder")
+                          << " side" << std::endl;
+                destroy_tcp_connection();
+            }
         }
     }
 
     if (resend_counter > 5) {
-        std::cout << "[-] Connection " << connection_id
-                  << " seems dead, removing..." << std::endl;
+        std::cout << "[-] Connection "
+                  << connection_id
+                  << " seems dead, removing..."
+                  << std::endl;
         is_dead = true;
+    }
+}
+
+void connection::on_tunnel_packet(const tunnel_packet* packet, icmp_packet_t* icmp_packet)
+{
+    last_received_icmp_packet = *icmp_packet;
+
+    if (packet->is_ack()) {
+        handle_ack(packet);
+    }
+
+    if (packet->is_psh()) {
+        handle_push(packet);
+    }
+
+    if (packet->is_fin()) {
+        handle_fin(packet);
     }
 }
 
@@ -215,7 +302,7 @@ void connection::send_message(const char* data, int len)
     outgoing_packets.push(packet);
 }
 
-void connection::destroy()
+void connection::destroy_tcp_connection()
 {
     if (tcp_socket != INVALID_SOCKET) {
         closesocket(tcp_socket);

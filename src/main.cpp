@@ -42,7 +42,7 @@ int main(int argc, char* argv[])
 
     if (help_option->is_set()) {
         std::cout << op << std::endl;
-        std::cout << "\tconfig file defaults to ping-tunnel.json" << std::endl;
+        std::cout << "\tconfig file defaults to ./ping-tunnel.json" << std::endl;
         return 0;
     }
 
