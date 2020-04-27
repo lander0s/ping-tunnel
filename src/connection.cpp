@@ -5,7 +5,9 @@
 #include "utils.h"
 #include <iostream>
 
-connection::connection(connection&& conn)
+bool connection::quiet_mode = false;
+
+connection::connection(connection&& conn) noexcept
     : is_dead(conn.is_dead)
     , connection_id(conn.connection_id)
     , resend_counter(conn.resend_counter)
@@ -22,7 +24,7 @@ connection::connection(connection&& conn)
 }
 
 // constructor used by the proxy facet
-connection::connection(uint32_t id, const ip_header_t* ip_header, icmp_packet_t* icmp_packet, const tunnel_packet* syn_packet)
+connection::connection(uint32_t id, const ip_header_t* ip_header, icmp_packet_t* icmp_packet, const tunnel_packet* syn_packet) noexcept
     : is_dead(false)
     , connection_id(id)
     , last_received_icmp_packet(*icmp_packet)
@@ -55,7 +57,7 @@ connection::connection(uint32_t id, const ip_header_t* ip_header, icmp_packet_t*
 }
 
 // constructor used by the forwarder facet
-connection::connection(socket_t socket, std::string dst_hostname, int dst_port)
+connection::connection(socket_t socket, std::string dst_hostname, int dst_port) noexcept
     : is_dead(false)
     , tcp_socket(socket)
     , resend_counter(0)
@@ -150,7 +152,9 @@ void connection::handle_ack(const tunnel_packet* packet)
     if (expected_seq_no == actual_seq_no) {
         resend_counter = 0;
 
-        std::cout << "[+] Packet confirmed as delivered, seq: " << actual_seq_no << std::endl;
+		if (!quiet_mode) {
+            std::cout << "[+] Packet confirmed as delivered, seq: " << actual_seq_no << std::endl;
+		}
 
         if (top->is_fin()) {
             is_dead = true;
@@ -162,7 +166,9 @@ void connection::handle_ack(const tunnel_packet* packet)
 
 void connection::handle_push(const tunnel_packet* packet)
 {
-    std::cout << "[+] Packet received, seq: " << packet->header.seq_no << std::endl;
+    if (!quiet_mode) {
+        std::cout << "[+] Packet received, seq: " << packet->header.seq_no << std::endl;
+    }
 
     send_ack(packet);
 
@@ -246,7 +252,7 @@ bool connection::should_send_new_message()
     auto elapsed_time = std::chrono::steady_clock::now() - last_transmission_time;
     if (std::chrono::duration_cast<std::chrono::milliseconds>(elapsed_time).count() > 1000) {
 
-        if (outgoing_packets.empty() == false) {
+        if (quiet_mode == false && outgoing_packets.empty() == false) {
             std::cout << "[*] Resending unconfirmed packet, seq: "
                       << outgoing_packets.front().header.seq_no
                       << ", size: " << outgoing_packets.front().header.data_len

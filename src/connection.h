@@ -42,9 +42,11 @@ typedef std::queue<tunnel_packet> packet_queue;
 
 class connection {
 public:
-    connection(connection&& conn);
-    connection(uint32_t id, const ip_header_t* ip_header, icmp_packet_t* icmp_packet, const tunnel_packet* syn_packet);
-    connection(socket_t socket, std::string dst_hostname, int dst_port);
+    static bool quiet_mode;
+
+    connection(connection&& conn) noexcept;
+    connection(uint32_t id, const ip_header_t* ip_header, icmp_packet_t* icmp_packet, const tunnel_packet* syn_packet) noexcept;
+    connection(socket_t socket, std::string dst_hostname, int dst_port) noexcept;
 
     bool is_dead;
     uint32_t connection_id;

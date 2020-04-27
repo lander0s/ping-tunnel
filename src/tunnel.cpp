@@ -39,9 +39,11 @@ bool tunnel::stopped_by_user = false;
 port_forwarding_list tunnel::forwardings;
 connection_list tunnel::alive_connections;
 
-void tunnel::run(std::string config_file)
+void tunnel::run(std::string config_file, bool quiet_mode)
 {
+    connection::quiet_mode = quiet_mode;
     try {
+
         std::string sniffer_filter;
         config::load_config(config_file);
 

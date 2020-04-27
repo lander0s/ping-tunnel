@@ -56,5 +56,5 @@ private:
     static void cleanup();
 
 public:
-    static void run(std::string config_file);
+    static void run(std::string config_file, bool quiet_mode);
 };
