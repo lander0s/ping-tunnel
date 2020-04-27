@@ -56,7 +56,7 @@ int main(int argc, char* argv[])
     }
 
     utils::initialize_dependencies();
-    tunnel::run(config_file , quiet_option->is_set());
+    tunnel::run(config_file, quiet_option->is_set());
     utils::deinitialize_dependencies();
     return 0;
 }

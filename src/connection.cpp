@@ -31,10 +31,11 @@ connection::connection(uint32_t id, const ip_header_t* ip_header, icmp_packet_t*
     , sequence_counter(utils::randon_uint32())
     , resend_counter(0)
     , local_sequence_number(0)
-    , remote_sequence_number(0)
+    , remote_sequence_number(syn_packet->header.seq_no)
 {
     std::cout << "[+] New connection to forward: " << id << std::endl;
 
+    local_sequence_number = sequence_counter - 1;
     // discover tunnel addr from ip header of incomming ping
     tunnel_addr                 = {};
     tunnel_addr.sin_family      = AF_INET;
@@ -67,6 +68,7 @@ connection::connection(socket_t socket, std::string dst_hostname, int dst_port) 
     , remote_sequence_number(0)
     , last_received_icmp_packet()
 {
+    local_sequence_number = sequence_counter - 1;
     utils::resolve_host(config::get_proxy_address(), &tunnel_addr);
     destination_addr = {};
     utils::resolve_host(dst_hostname, &destination_addr);
@@ -145,22 +147,26 @@ void connection::handle_ack(const tunnel_packet* packet)
         return;
     }
 
-    tunnel_packet* top       = &outgoing_packets.front();
-    uint32_t expected_seq_no = top->header.seq_no;
-    uint32_t actual_seq_no   = packet->header.seq_no;
+    tunnel_packet* last_sent_packet = &outgoing_packets.front();
+    uint32_t seq_to_be_confirmed    = last_sent_packet->header.seq_no;
+    uint32_t confirmed_seq          = packet->header.ack_no;
 
-    if (expected_seq_no == actual_seq_no) {
-        resend_counter = 0;
+    if (seq_to_be_confirmed == confirmed_seq) {
 
-		if (!quiet_mode) {
-            std::cout << "[+] Packet confirmed as delivered, seq: " << actual_seq_no << std::endl;
-		}
-
-        if (top->is_fin()) {
-            is_dead = true;
-        } else {
-            outgoing_packets.pop();
+        if (!quiet_mode) {
+            std::cout << "[+] Packet confirmed as delivered, seq: " << confirmed_seq << std::endl;
         }
+
+        if (last_sent_packet->is_fin()) {
+            is_dead = true;
+        }
+
+        if (last_sent_packet->is_syn()) {
+            remote_sequence_number = packet->header.seq_no;
+        }
+
+        resend_counter = 0;
+        outgoing_packets.pop();
     }
 }
 
@@ -172,8 +178,11 @@ void connection::handle_push(const tunnel_packet* packet)
 
     send_ack(packet);
 
-    if (remote_sequence_number != packet->header.seq_no) {
-        remote_sequence_number = packet->header.seq_no;
+    uint32_t next_expected_seq = remote_sequence_number + 1;
+    uint32_t arriving_seq      = packet->header.seq_no;
+
+    if (next_expected_seq == arriving_seq) {
+        remote_sequence_number = arriving_seq;
         on_message((char*)packet->data, packet->header.data_len);
     }
 }
@@ -195,7 +204,8 @@ void connection::send_ack(const tunnel_packet* incomming_packet)
 {
     tunnel_packet ack        = {};
     ack.header.magic_number  = tunnel_packet::MAGIC_NUMBER;
-    ack.header.seq_no        = incomming_packet->header.seq_no;
+    ack.header.seq_no        = local_sequence_number;
+    ack.header.ack_no        = incomming_packet->header.seq_no;
     ack.header.connection_id = incomming_packet->header.connection_id;
 
     ack.header.flags |= tunnel_packet::ACK_MASK;

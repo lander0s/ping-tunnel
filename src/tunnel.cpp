@@ -169,8 +169,8 @@ bool tunnel::should_process_packet(const tunnel_packet* packet)
     }
 
     // the packet must have been created by the opposite facet.
-	// this ignores Operating System replies which are an exact
-	// copy of the originally sent ping
+    // this ignores Operating System replies which are an exact
+    // copy of the originally sent ping
     if (packet->was_sent_by_proxy() == config::is_proxy()) {
         return false;
     }
