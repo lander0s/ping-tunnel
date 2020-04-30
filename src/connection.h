@@ -32,15 +32,15 @@
 
 #define TEST(bitflag, mask) ((bitflag & mask) == mask)
 
+static const uint8_t SYN_MASK      = 1 << 0; // new connection
+static const uint8_t PSH_MASK      = 1 << 1; // the message contains data
+static const uint8_t ACK_MASK      = 1 << 2; // acknowledge
+static const uint8_t FIN_MASK      = 1 << 3; // close connection
+static const uint8_t PROXY_MASK    = 1 << 4; // the message was sent by the proxy facet}
+static const uint32_t MAGIC_NUMBER = 0xdddddddd; 
+
+#pragma pack(push, 1)
 struct tunnel_packet {
-
-    static const uint8_t SYN_MASK      = 1 << 0; // new connection
-    static const uint8_t PSH_MASK      = 1 << 1; // the message contains data
-    static const uint8_t ACK_MASK      = 1 << 2; // acknowledge
-    static const uint8_t FIN_MASK      = 1 << 3; // close connection
-    static const uint8_t PROXY_MASK    = 1 << 4; // the message was sent by the proxy facet
-    static const uint32_t MAGIC_NUMBER = 0xdeadbeef;
-
     struct {
         uint32_t magic_number;
         uint32_t dst_addr;
@@ -50,7 +50,7 @@ struct tunnel_packet {
         uint32_t data_len;
         uint32_t connection_id;
         uint8_t flags;
-    } header;
+    } PACKED header;
     uint8_t data[ICMP_PAYLOAD_MAX_SIZE - sizeof(header)];
 
     bool is_syn() const { return TEST(header.flags, SYN_MASK); }
@@ -60,7 +60,8 @@ struct tunnel_packet {
     bool was_sent_by_proxy() const { return TEST(header.flags, PROXY_MASK); }
     bool has_valid_magic_number() const { return header.magic_number == MAGIC_NUMBER; }
     unsigned int size() { return sizeof(header) + header.data_len; }
-};
+} PACKED;
+#pragma pack(pop)
 
 typedef std::queue<tunnel_packet> packet_queue;
 

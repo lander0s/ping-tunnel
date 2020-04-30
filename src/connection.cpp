@@ -227,14 +227,14 @@ void connection::handle_fin(const tunnel_packet* packet)
 void connection::send_ack(const tunnel_packet* incomming_packet)
 {
     tunnel_packet ack        = {};
-    ack.header.magic_number  = tunnel_packet::MAGIC_NUMBER;
+    ack.header.magic_number  = MAGIC_NUMBER;
     ack.header.seq_no        = local_sequence_number;
     ack.header.ack_no        = incomming_packet->header.seq_no;
     ack.header.connection_id = incomming_packet->header.connection_id;
 
-    ack.header.flags |= tunnel_packet::ACK_MASK;
+    ack.header.flags |= ACK_MASK;
     if (config::is_proxy()) {
-        ack.header.flags |= tunnel_packet::PROXY_MASK;
+        ack.header.flags |= PROXY_MASK;
     }
 
     if (config::is_proxy()) {
@@ -249,12 +249,12 @@ void connection::send_syn()
     tunnel_packet syn = {};
 
     syn.header.connection_id = connection_id;
-    syn.header.magic_number  = tunnel_packet::MAGIC_NUMBER;
+    syn.header.magic_number  = MAGIC_NUMBER;
     syn.header.dst_addr      = destination_addr.sin_addr.s_addr;
     syn.header.dst_port      = destination_addr.sin_port;
     syn.header.seq_no        = sequence_counter++;
 
-    syn.header.flags |= tunnel_packet::SYN_MASK;
+    syn.header.flags |= SYN_MASK;
     outgoing_packets.push(syn);
 }
 
@@ -263,14 +263,14 @@ void connection::send_fin()
     tunnel_packet fin = {};
 
     fin.header.connection_id = connection_id;
-    fin.header.magic_number  = tunnel_packet::MAGIC_NUMBER;
+    fin.header.magic_number  = MAGIC_NUMBER;
     fin.header.dst_addr      = destination_addr.sin_addr.s_addr;
     fin.header.dst_port      = destination_addr.sin_port;
     fin.header.seq_no        = sequence_counter++;
 
-    fin.header.flags |= tunnel_packet::FIN_MASK;
+    fin.header.flags |= FIN_MASK;
     if (config::is_proxy()) {
-        fin.header.flags |= tunnel_packet::PROXY_MASK;
+        fin.header.flags |= PROXY_MASK;
     }
     outgoing_packets.push(fin);
 }
@@ -307,7 +307,7 @@ tunnel_packet connection::get_next_message_to_send()
     // send an empty packet to keep 'ICMP Query Mapping' alive (rfc5508)
     tunnel_packet keep_alive        = {};
     keep_alive.header.connection_id = connection_id;
-    keep_alive.header.magic_number  = tunnel_packet::MAGIC_NUMBER;
+    keep_alive.header.magic_number  = MAGIC_NUMBER;
     keep_alive.header.dst_addr      = destination_addr.sin_addr.s_addr;
     keep_alive.header.dst_port      = destination_addr.sin_port;
     return keep_alive;
@@ -329,14 +329,14 @@ void connection::send_message(const char* data, int len)
 {
     tunnel_packet packet        = {};
     packet.header.connection_id = connection_id;
-    packet.header.magic_number  = tunnel_packet::MAGIC_NUMBER;
+    packet.header.magic_number  = MAGIC_NUMBER;
     packet.header.seq_no        = sequence_counter++;
     packet.header.data_len      = len;
     packet.header.dst_addr      = destination_addr.sin_addr.s_addr;
     packet.header.dst_port      = destination_addr.sin_port;
-    packet.header.flags |= tunnel_packet::PSH_MASK;
+    packet.header.flags |= PSH_MASK;
     if (config::is_proxy()) {
-        packet.header.flags |= tunnel_packet::PROXY_MASK;
+        packet.header.flags |= PROXY_MASK;
     }
     memcpy(packet.data, data, len);
     outgoing_packets.push(packet);
