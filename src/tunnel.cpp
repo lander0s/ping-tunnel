@@ -165,6 +165,7 @@ bool tunnel::should_process_packet(const tunnel_packet* packet)
 {
     // the packet must have a valid magic number
     if (packet->has_valid_magic_number() == false) {
+        std::cout << "[+] ignoring packet due to unkown magic number" << std::endl;
         return false;
     }
 
