@@ -111,11 +111,11 @@ void tunnel::main_loop()
         char raw_packet[2048];
         int len = sniffer::get_next_capture(raw_packet, sizeof(raw_packet));
         if (len > 0) {
+
             // the sniffer's filter guarantees the packet is either echo request or echo reply
-            ethernet_header_t* ethernet_header = (ethernet_header_t*)raw_packet;
-            ip_header_t* ip_header             = (ip_header_t*)(raw_packet + sizeof(ethernet_header_t));
-            icmp_packet_t* icmp_packet         = (icmp_packet_t*)(raw_packet + sizeof(ethernet_header_t) + sizeof(ip_header_t));
-            tunnel_packet* tun_packet          = (tunnel_packet*)icmp_packet->payload;
+            ip_header_t*   ip_header   = (ip_header_t*)(raw_packet);
+            icmp_packet_t* icmp_packet = (icmp_packet_t*)(raw_packet + sizeof(ip_header_t));
+            tunnel_packet* tun_packet  = (tunnel_packet*)icmp_packet->payload;
 
             if (should_process_packet(tun_packet)) {
 

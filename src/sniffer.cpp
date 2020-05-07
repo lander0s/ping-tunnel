@@ -72,14 +72,17 @@ void sniffer::deinit()
 int sniffer::get_next_capture(char* raw_packet, uint16_t len)
 {
     struct pcap_pkthdr* header;
-    const u_char* packet;
-    int result = pcap_next_ex(handle, &header, &packet);
+    u_char* packet;
+    int result = pcap_next_ex(handle, &header, (const u_char**)&packet);
     if (result == PCAP_ERROR) {
         char buf[1024];
         sprintf(buf, "Error capturing packets\r\n\t%s", pcap_geterr(handle));
         throw std::runtime_error(buf);
     }
     if (result == 1) {
+        if (pcap_datalink(handle) == DLT_EN10MB) {
+            packet += sizeof(ethernet_header_t);
+		}
         len = header->len > len ? len : header->len;
         memcpy(raw_packet, packet, len);
         return len;
