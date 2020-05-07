@@ -82,7 +82,7 @@ int sniffer::get_next_capture(char* raw_packet, uint16_t len)
     if (result == 1) {
         if (pcap_datalink(handle) == DLT_EN10MB) {
             packet += sizeof(ethernet_header_t);
-		}
+        }
         len = header->len > len ? len : header->len;
         memcpy(raw_packet, packet, len);
         return len;

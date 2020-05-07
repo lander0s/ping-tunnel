@@ -113,7 +113,7 @@ void tunnel::main_loop()
         if (len > 0) {
 
             // the sniffer's filter guarantees the packet is either echo request or echo reply
-            ip_header_t*   ip_header   = (ip_header_t*)(raw_packet);
+            ip_header_t* ip_header     = (ip_header_t*)(raw_packet);
             icmp_packet_t* icmp_packet = (icmp_packet_t*)(raw_packet + sizeof(ip_header_t));
             tunnel_packet* tun_packet  = (tunnel_packet*)icmp_packet->payload;
 

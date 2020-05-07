@@ -37,7 +37,7 @@ static const uint8_t PSH_MASK      = 1 << 1; // the message contains data
 static const uint8_t ACK_MASK      = 1 << 2; // acknowledge
 static const uint8_t FIN_MASK      = 1 << 3; // close connection
 static const uint8_t PROXY_MASK    = 1 << 4; // the message was sent by the proxy facet}
-static const uint32_t MAGIC_NUMBER = 0xdddddddd; 
+static const uint32_t MAGIC_NUMBER = 0xdddddddd;
 
 #pragma pack(push, 1)
 struct tunnel_packet {
